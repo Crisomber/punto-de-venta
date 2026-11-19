@@ -390,7 +390,7 @@ git commit -m "feat: dueno can activate/deactivate usuarios"
 - Consumes: `UsuarioAdminController.toResponse` (Task 1); `POST /api/auth/login/pin` (same cross-task regression pattern as Task 3, now for PIN changes).
 - Produces: `EditarUsuarioRequest(String nombre, Estacion estacion, String pin)` — every field optional; a `null` field means "don't change it" (there is deliberately no way to *clear* a CHEF's `estacion` back to `null` through this endpoint — not a realistic need, since a chef always belongs to a station). `PATCH /api/usuarios/{id}` — `200` + `UsuarioResponse` on success, `404` if `id` doesn't match any usuario, `400` if `estacion` is set on a non-`CHEF` usuario, if `pin` is set on the `DUENO` usuario (who has no PIN), or if `pin` isn't exactly 4 digits; `403`/`401` same as Task 1. `rol` is intentionally not editable here (see Global Constraints).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 class EditarUsuarioControllerTest extends AbstractIntegrationTest {
@@ -471,12 +471,12 @@ class EditarUsuarioControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=EditarUsuarioControllerTest`
 Expected: FAIL (404 — no generic `PATCH /{id}` route yet; note it's registered *after* `/{id}/activo` in the controller, but Spring MVC path matching doesn't care about declaration order for distinct literal suffixes, so this is just a code-organization note, not a correctness risk).
 
-- [ ] **Step 3: Implement `EditarUsuarioRequest` and `UsuarioAdminController.editarUsuario`**
+- [x] **Step 3: Implement `EditarUsuarioRequest` and `UsuarioAdminController.editarUsuario`**
 
 ```java
 @PatchMapping("/{id}")
@@ -508,17 +508,17 @@ public UsuarioResponse editarUsuario(@PathVariable UUID id, @RequestBody EditarU
 }
 ```
 
-- [ ] **Step 4: Run the test and verify it passes**
+- [x] **Step 4: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=EditarUsuarioControllerTest`
 Expected: PASS, all 8 cases.
 
-- [ ] **Step 5: Run the full suite**
+- [x] **Step 5: Run the full suite**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test`
 Expected: PASS — every test from this plan and from backend-fundamentos, together.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/usuario backend/src/test/java/com/posrestaurante/backend/usuario/EditarUsuarioControllerTest.java

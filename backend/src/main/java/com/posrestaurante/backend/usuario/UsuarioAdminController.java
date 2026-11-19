@@ -2,6 +2,7 @@ package com.posrestaurante.backend.usuario;
 
 import com.posrestaurante.backend.usuario.dto.ActivarUsuarioRequest;
 import com.posrestaurante.backend.usuario.dto.CrearUsuarioRequest;
+import com.posrestaurante.backend.usuario.dto.EditarUsuarioRequest;
 import com.posrestaurante.backend.usuario.dto.UsuarioResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -74,6 +75,34 @@ public class UsuarioAdminController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         usuario.setActivo(request.activo());
+        usuarioRepository.save(usuario);
+        return toResponse(usuario);
+    }
+
+    @PatchMapping("/{id}")
+    public UsuarioResponse editarUsuario(@PathVariable UUID id, @RequestBody EditarUsuarioRequest request) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        if (request.nombre() != null && !request.nombre().isBlank()) {
+            usuario.setNombre(request.nombre());
+        }
+        if (request.estacion() != null) {
+            if (usuario.getRol() != Rol.CHEF) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "estacion solo aplica a CHEF");
+            }
+            usuario.setEstacion(request.estacion());
+        }
+        if (request.pin() != null) {
+            if (usuario.getRol() == Rol.DUENO) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "dueno no usa PIN");
+            }
+            if (!request.pin().matches("\\d{4}")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "pin debe ser de 4 digitos");
+            }
+            usuario.setPinHash(passwordEncoder.encode(request.pin()));
+        }
+
         usuarioRepository.save(usuario);
         return toResponse(usuario);
     }
