@@ -40,7 +40,7 @@
 - Consumes: `UsuarioRepository`, `PasswordEncoder`, `Rol`, `Estacion`, `Usuario` (backend-fundamentos Task 2); `JwtService` (backend-fundamentos Task 3, used by tests to mint tokens — note it needs no DB row to mint a token for an arbitrary `usuarioId`/`rol`, since the filter never looks the user up).
 - Produces: `CrearUsuarioRequest(String nombre, Rol rol, Estacion estacion, String pin)`; `UsuarioResponse(UUID id, String nombre, Rol rol, Estacion estacion, String username, boolean activo)` (reused unchanged by Tasks 2–4); `POST /api/usuarios` — `201` + `UsuarioResponse` on success, `400` when `rol` is `DUENO` or missing, when `rol == CHEF` and `estacion` is missing, when `rol != CHEF` and `estacion` is present, or when `pin` isn't exactly 4 digits; `403` for a valid token with any `rol` other than `DUENO`; `401` with no token. Adds `.requestMatchers("/api/usuarios/**").hasRole("DUENO")` to `SecurityConfig`, placed before the existing `.anyRequest().authenticated()` — this one rule covers every endpoint Tasks 2–4 add too.
 
-- [ ] **Step 1: Write the failing controller test**
+- [x] **Step 1: Write the failing controller test**
 
 ```java
 class CrearUsuarioControllerTest extends AbstractIntegrationTest {
@@ -107,12 +107,12 @@ class CrearUsuarioControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=CrearUsuarioControllerTest`
 Expected: FAIL — every case 404s (no route yet); this also means `nonDuenoCannotCreateUsuarios` fails with 404 instead of the 403 it asserts, which is fine at this checkpoint (it'll be exercised for real once both the route and the `hasRole` rule exist in Step 4).
 
-- [ ] **Step 3: Add the `SecurityConfig` rule**
+- [x] **Step 3: Add the `SecurityConfig` rule**
 
 ```java
 .authorizeHttpRequests(auth -> auth
@@ -121,7 +121,7 @@ Expected: FAIL — every case 404s (no route yet); this also means `nonDuenoCann
         .anyRequest().authenticated())
 ```
 
-- [ ] **Step 4: Implement `CrearUsuarioRequest`, `UsuarioResponse`, `UsuarioAdminController.crearUsuario`**
+- [x] **Step 4: Implement `CrearUsuarioRequest`, `UsuarioResponse`, `UsuarioAdminController.crearUsuario`**
 
 ```java
 @RestController
@@ -172,17 +172,17 @@ public class UsuarioAdminController {
 }
 ```
 
-- [ ] **Step 5: Run the test and verify it passes**
+- [x] **Step 5: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=CrearUsuarioControllerTest`
 Expected: PASS, all 8 cases.
 
-- [ ] **Step 6: Run the full suite**
+- [x] **Step 6: Run the full suite**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test`
 Expected: PASS — this task's new tests plus every test from backend-fundamentos, together.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/usuario backend/src/main/java/com/posrestaurante/backend/security/SecurityConfig.java backend/src/test/java/com/posrestaurante/backend/usuario/CrearUsuarioControllerTest.java
