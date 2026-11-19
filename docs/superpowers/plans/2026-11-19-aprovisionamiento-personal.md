@@ -284,7 +284,7 @@ git commit -m "feat: dueno can list all usuarios"
 - Consumes: `UsuarioAdminController.toResponse` (Task 1); `AuthController`'s `POST /api/auth/login/pin` (backend-fundamentos Task 4) — this task's tests chain into it to prove deactivation actually blocks a real login, not just a database column.
 - Produces: `ActivarUsuarioRequest(Boolean activo)`; `PATCH /api/usuarios/{id}/activo` — `200` + `UsuarioResponse` on success, `400` if `activo` is missing, `404` if `id` doesn't match any usuario, `403`/`401` same as Task 1.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 class ActivarUsuarioControllerTest extends AbstractIntegrationTest {
@@ -343,12 +343,12 @@ class ActivarUsuarioControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=ActivarUsuarioControllerTest`
 Expected: FAIL (404 — no `PATCH .../activo` route yet).
 
-- [ ] **Step 3: Implement `ActivarUsuarioRequest` and `UsuarioAdminController.cambiarActivo`**
+- [x] **Step 3: Implement `ActivarUsuarioRequest` and `UsuarioAdminController.cambiarActivo`**
 
 ```java
 @PatchMapping("/{id}/activo")
@@ -365,12 +365,12 @@ public UsuarioResponse cambiarActivo(@PathVariable UUID id, @RequestBody Activar
 }
 ```
 
-- [ ] **Step 4: Run the test and verify it passes**
+- [x] **Step 4: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=ActivarUsuarioControllerTest`
 Expected: PASS, all 6 cases.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/usuario backend/src/test/java/com/posrestaurante/backend/usuario/ActivarUsuarioControllerTest.java
