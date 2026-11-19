@@ -434,7 +434,7 @@ git commit -m "feat: add staff PIN login with attendance registration"
 - Consumes: `JwtService` (Task 3), `TestUsuarios` (Task 2).
 - Produces: `SecurityConfig` — a `SecurityFilterChain` bean that permits `POST /api/auth/login/**` and `GET /api/auth/staff` and `/actuator/health` without authentication, requires a valid JWT for every other path, is stateless (`SessionCreationPolicy.STATELESS`), and registers `authorities` as `ROLE_<rol>` (e.g. `ROLE_DUENO`) so later plans can use `hasRole("DUENO")`; `MeResponse(UUID usuarioId, String nombre, Rol rol)`; `GET /api/auth/me` — 200 + `MeResponse` for the caller identified by their token's claims, 401 if no token, a malformed token, or an expired token.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 class AuthMeControllerTest extends AbstractIntegrationTest {
@@ -472,16 +472,16 @@ class AuthMeControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && mvn -q test -Dtest=AuthMeControllerTest`
 Expected: FAIL (no route, and/or Spring Security's default config blocks everything with a login page redirect instead of a clean 401).
 
-- [ ] **Step 3: Implement `JwtAuthenticationFilter`**
+- [x] **Step 3: Implement `JwtAuthenticationFilter`**
 
 `extends OncePerRequestFilter`. Reads the `Authorization` header; if absent, calls `filterChain.doFilter` and lets `SecurityConfig` deny unauthenticated access downstream. If present, strips `Bearer `, calls `jwtService.parse(token)`; on success, builds a `UsernamePasswordAuthenticationToken` carrying the `usuarioId`/`nombre` as principal details and `List.of(new SimpleGrantedAuthority("ROLE_" + rol))` as authorities, sets it on `SecurityContextHolder`. On any `JwtException`/`IllegalArgumentException` from `parse`, do **not** set the context and let the request continue unauthenticated (so `SecurityConfig` returns 401, not the filter throwing a 500).
 
-- [ ] **Step 4: Implement `SecurityConfig`**
+- [x] **Step 4: Implement `SecurityConfig`**
 
 ```java
 @Bean
@@ -498,21 +498,21 @@ SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilt
 }
 ```
 
-- [ ] **Step 5: Implement `MeResponse` and `AuthController.me(Authentication authentication)`**
+- [x] **Step 5: Implement `MeResponse` and `AuthController.me(Authentication authentication)`**
 
 Read `usuarioId`/`nombre`/`rol` back out of the `Authentication` populated by the filter (e.g. from the principal details object the filter attached) and return a `MeResponse`. No repository lookup needed — everything required is already in the token's claims.
 
-- [ ] **Step 6: Run the test and verify it passes**
+- [x] **Step 6: Run the test and verify it passes**
 
 Run: `cd backend && mvn -q test -Dtest=AuthMeControllerTest`
 Expected: PASS, all four cases.
 
-- [ ] **Step 7: Run the full suite**
+- [x] **Step 7: Run the full suite**
 
 Run: `cd backend && mvn -q test`
 Expected: PASS — every test from Tasks 1–5 green together.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/security backend/src/main/java/com/posrestaurante/backend/auth backend/src/test/java/com/posrestaurante/backend/security

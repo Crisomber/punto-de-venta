@@ -5,13 +5,16 @@ import com.posrestaurante.backend.asistencia.RegistroAsistenciaRepository;
 import com.posrestaurante.backend.asistencia.TipoAsistencia;
 import com.posrestaurante.backend.auth.dto.AuthResponse;
 import com.posrestaurante.backend.auth.dto.LoginRequest;
+import com.posrestaurante.backend.auth.dto.MeResponse;
 import com.posrestaurante.backend.auth.dto.PinLoginRequest;
 import com.posrestaurante.backend.auth.dto.StaffListItem;
+import com.posrestaurante.backend.security.AuthenticatedUser;
 import com.posrestaurante.backend.security.JwtService;
 import com.posrestaurante.backend.usuario.Rol;
 import com.posrestaurante.backend.usuario.Usuario;
 import com.posrestaurante.backend.usuario.UsuarioRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -76,6 +79,12 @@ public class AuthController {
 
         String token = jwtService.generateToken(usuario.getId(), usuario.getNombre(), usuario.getRol());
         return new AuthResponse(token, usuario.getNombre(), usuario.getRol());
+    }
+
+    @GetMapping("/me")
+    public MeResponse me(Authentication authentication) {
+        AuthenticatedUser usuario = (AuthenticatedUser) authentication.getPrincipal();
+        return new MeResponse(usuario.usuarioId(), usuario.nombre(), usuario.rol());
     }
 
     private ResponseStatusException credencialesInvalidas() {
