@@ -201,7 +201,7 @@ git commit -m "feat: dueno can create staff accounts (mesero/cajero/chef)"
 - Consumes: `UsuarioAdminController.toResponse` (Task 1).
 - Produces: `GET /api/usuarios` — `200` + `List<UsuarioResponse>` of **every** usuario, active or not, `DUENO` included (unlike `/api/auth/staff`, which is the PIN-login "pick your name" list and deliberately excludes `DUENO` and inactive staff — this is a different, admin-facing listing with a different purpose, so it doesn't filter); `403`/`401` same as Task 1.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 class ListarUsuariosControllerTest extends AbstractIntegrationTest {
@@ -243,12 +243,12 @@ class ListarUsuariosControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=ListarUsuariosControllerTest`
 Expected: FAIL (404 — no `GET` route yet; the `hasRole` matcher already in place from Task 1 means the two access-control cases already fail for the right reason once the route exists, but right now everything 404s).
 
-- [ ] **Step 3: Implement `UsuarioAdminController.listarUsuarios`**
+- [x] **Step 3: Implement `UsuarioAdminController.listarUsuarios`**
 
 ```java
 @GetMapping
@@ -259,12 +259,12 @@ public List<UsuarioResponse> listarUsuarios() {
 }
 ```
 
-- [ ] **Step 4: Run the test and verify it passes**
+- [x] **Step 4: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=ListarUsuariosControllerTest`
 Expected: PASS, all 3 cases.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/usuario/UsuarioAdminController.java backend/src/test/java/com/posrestaurante/backend/usuario/ListarUsuariosControllerTest.java
