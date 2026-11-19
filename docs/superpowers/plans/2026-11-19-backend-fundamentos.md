@@ -350,7 +350,7 @@ git commit -m "feat: add dueno username/password login issuing a JWT, seed dev d
 - Consumes: `UsuarioRepository`, `RegistroAsistenciaRepository`, `TestUsuarios` (Task 2), `JwtService`, `PasswordEncoder` (Task 3).
 - Produces: `PinLoginRequest(UUID usuarioId, String pin)` record; `StaffListItem(UUID id, String nombre, Rol rol)` record; `GET /api/auth/staff` — 200 + JSON array of `StaffListItem` for every `usuario` where `activo = true` and `rol != DUENO`; `POST /api/auth/login/pin` — 200 + `AuthResponse` on correct PIN for an active non-dueño usuario (and inserts one `RegistroAsistencia` row with `tipo = ENTRADA`), 401 on wrong PIN, unknown id, or `activo = false` (no `RegistroAsistencia` row inserted in any of these cases).
 
-- [ ] **Step 1: Write the failing controller test**
+- [x] **Step 1: Write the failing controller test**
 
 ```java
 class PinAuthControllerTest extends AbstractIntegrationTest {
@@ -398,21 +398,21 @@ class PinAuthControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && mvn -q test -Dtest=PinAuthControllerTest`
 Expected: FAIL (404s — routes don't exist).
 
-- [ ] **Step 3: Implement `PinLoginRequest`, `StaffListItem`, and the two `AuthController` endpoints**
+- [x] **Step 3: Implement `PinLoginRequest`, `StaffListItem`, and the two `AuthController` endpoints**
 
 `getStaff()` returns `usuarioRepository.findByActivoTrueAndRolNot(Rol.DUENO)` mapped to `StaffListItem`. `loginPin(request)` loads the `usuario` by id (404→401, same generic error as Task 3); if absent, inactive, or `!passwordEncoder.matches(request.pin(), usuario.getPinHash())`, return 401 **without** touching `registroAsistenciaRepository`. On success: save a new `RegistroAsistencia(usuario, Instant.now(), TipoAsistencia.ENTRADA)` *before* returning the token, then `jwtService.generateToken(...)`.
 
-- [ ] **Step 4: Run the test and verify it passes**
+- [x] **Step 4: Run the test and verify it passes**
 
 Run: `cd backend && mvn -q test -Dtest=PinAuthControllerTest`
 Expected: PASS, all five cases.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/auth backend/src/test/java/com/posrestaurante/backend/auth/PinAuthControllerTest.java
