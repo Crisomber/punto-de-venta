@@ -232,6 +232,7 @@ git commit -m "feat: add Usuario and RegistroAsistencia schema, entities, and re
 
 **Files:**
 - Create: `backend/src/main/java/com/posrestaurante/backend/security/JwtService.java`
+- Create: `backend/src/main/java/com/posrestaurante/backend/security/SecurityConfig.java` (minimal version — see deviation note below)
 - Create: `backend/src/main/java/com/posrestaurante/backend/auth/dto/LoginRequest.java`
 - Create: `backend/src/main/java/com/posrestaurante/backend/auth/dto/AuthResponse.java`
 - Create: `backend/src/main/java/com/posrestaurante/backend/auth/AuthController.java`
@@ -243,7 +244,11 @@ git commit -m "feat: add Usuario and RegistroAsistencia schema, entities, and re
 - Consumes: `UsuarioRepository`, `Rol`, `TestUsuarios` (Task 2).
 - Produces: `PasswordEncoder` bean (`BCryptPasswordEncoder`, in a new `@Configuration` class `backend/src/main/java/com/posrestaurante/backend/security/PasswordEncoderConfig.java`); `JwtService` with `String generateToken(UUID usuarioId, String nombre, Rol rol)` and `Jws<Claims> parse(String token)` (throws `JwtException` on anything invalid/expired — callers catch this, nothing in `JwtService` swallows it); `LoginRequest(String username, String password)` record; `AuthResponse(String token, String nombre, Rol rol)` record; `POST /api/auth/login/dueno` — 200 + `AuthResponse` on success, 401 (empty body or generic `{"error":"credenciales invalidas"}`) on bad username, bad password, or `activo = false`. Also produces `V3__seed_dueno_dev.sql`, a Flyway migration that inserts exactly one dev dueño account (`username = 'admin'`) so the system is logeable end-to-end without a provisioning UI (none exists yet — the dueño-creates-staff flow is a later plan).
 
-- [ ] **Step 1: Write the failing controller test**
+**Deviation from the original plan:** this task also creates a *minimal* `SecurityConfig` (CSRF disabled, `/actuator/health` and `/api/auth/login/**` `permitAll()`, everything else `authenticated()`), even though Task 5 is where `SecurityConfig` was originally meant to appear. Without it, Spring Security's default autoconfiguration (CSRF protection + basic-auth-everything) returns `403` for every `POST`, including `/api/auth/login/dueno`, before the request ever reaches the controller — the test class can't get past step 2 without it. Task 4 extends the `permitAll()` list with `/api/auth/staff`; Task 5 replaces this file's body entirely with the stateless, JWT-aware version (and `addFilterBefore(jwtFilter, ...)`, and the custom 401 entry point) — at that point it stops being a `Create` and becomes a straightforward edit of an existing file.
+
+**Also note:** `V3__seed_dueno_dev.sql`'s seeded `username = 'admin'` is now live data in every test run against the shared Testcontainers Postgres (Task 1's fix made that container a true cross-class singleton). Any later test fixture that needs its own dueño account must pick a username other than `admin` — `UsuarioPersistenceTest.listsActiveNonDuenoStaffOnly` collided with it and was changed to use `otro-admin`.
+
+- [x] **Step 1: Write the failing controller test**
 
 ```java
 class DuenoAuthControllerTest extends AbstractIntegrationTest {
@@ -287,12 +292,12 @@ class DuenoAuthControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && mvn -q test -Dtest=DuenoAuthControllerTest`
 Expected: FAIL (404 — no `/api/auth/login/dueno` route yet).
 
-- [ ] **Step 3: Add `jwt.secret` and `jwt.expiration-minutes` to `application.yml`**
+- [x] **Step 3: Add `jwt.secret` and `jwt.expiration-minutes` to `application.yml`**
 
 ```yaml
 jwt:
@@ -300,15 +305,15 @@ jwt:
   expiration-minutes: 480
 ```
 
-- [ ] **Step 4: Implement `JwtService`**
+- [x] **Step 4: Implement `JwtService`**
 
 Use `Jwts.builder()` from JJWT 0.12.x, signing with HMAC-SHA256 from `jwt.secret` (read via `@Value`), embedding claims `usuarioId` (string UUID), `nombre`, `rol`; expiry = now + `jwt.expiration-minutes`. `parse(String token)` calls `Jwts.parser().verifyWith(key).build().parseSignedClaims(token)` and lets `JwtException`/`IllegalArgumentException` propagate.
 
-- [ ] **Step 5: Implement `PasswordEncoderConfig`, `LoginRequest`, `AuthResponse`, `AuthController.loginDueno`**
+- [x] **Step 5: Implement `PasswordEncoderConfig`, `LoginRequest`, `AuthResponse`, `AuthController.loginDueno`**
 
 `loginDueno` looks up `usuarioRepository.findByUsernameAndActivoTrue(request.username())`; if absent, or `passwordEncoder.matches(request.password(), usuario.getPasswordHash())` is false, return `401` via `ResponseStatusException` — same status and body shape for "not found" and "wrong password" so the two are indistinguishable to a caller. On success, call `jwtService.generateToken(...)` and return `200` with `AuthResponse`.
 
-- [ ] **Step 6: Write `V3__seed_dueno_dev.sql`**
+- [x] **Step 6: Write `V3__seed_dueno_dev.sql`**
 
 Pick a documented dev password (e.g. `cambiame123`), generate its BCrypt hash by running `new BCryptPasswordEncoder().encode("cambiame123")` from a scratch `main`/test (same encoder the app uses — a mismatched work factor or algorithm will make `seededDevDuenoCanLogIn` fail even with the right plaintext), then:
 
@@ -319,12 +324,12 @@ VALUES (gen_random_uuid(), 'Administrador', 'DUENO', 'admin', '<paste the genera
 
 If `gen_random_uuid()` is unavailable on the target Postgres, generate a literal UUID instead (e.g. with `uuidgen` or `UUID.randomUUID()`) and paste it directly — this row's id never needs to be looked up by the application, only its username.
 
-- [ ] **Step 7: Run the test and verify it passes**
+- [x] **Step 7: Run the test and verify it passes**
 
 Run: `cd backend && mvn -q test -Dtest=DuenoAuthControllerTest`
 Expected: PASS, all five cases including `seededDevDuenoCanLogIn`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/security backend/src/main/java/com/posrestaurante/backend/auth backend/src/main/resources/application.yml backend/src/main/resources/db/migration/V3__seed_dueno_dev.sql backend/src/test/java/com/posrestaurante/backend/auth

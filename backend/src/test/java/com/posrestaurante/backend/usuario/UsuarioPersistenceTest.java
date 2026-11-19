@@ -34,7 +34,7 @@ class UsuarioPersistenceTest extends AbstractIntegrationTest {
 
     @Test
     void listsActiveNonDuenoStaffOnly() {
-        Usuario dueno = TestUsuarios.dueno("admin", "hash", true);
+        Usuario dueno = TestUsuarios.dueno("otro-admin", "hash", true);
         Usuario activoMesero = TestUsuarios.staff("Luis", Rol.MESERO, "pin", true);
         Usuario inactivoChef = TestUsuarios.staff("Mario", Rol.CHEF, "pin", false);
         usuarioRepository.save(dueno);
