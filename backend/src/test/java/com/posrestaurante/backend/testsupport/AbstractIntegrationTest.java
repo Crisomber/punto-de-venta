@@ -8,18 +8,23 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@Testcontainers
 public abstract class AbstractIntegrationTest {
 
-    @Container
+    // Deliberately NOT managed by @Testcontainers/@Container: that JUnit5 extension
+    // ties container start/stop to each test class's own lifecycle, which tears this
+    // container down between classes even though the field is static and shared.
+    // Starting it here, in a static initializer, makes it a true JVM-wide singleton:
+    // it starts once and is only ever cleaned up by Ryuk at JVM exit.
     static final PostgreSQLContainer<?> POSTGRES =
             new PostgreSQLContainer<>("postgres:16-alpine");
+
+    static {
+        POSTGRES.start();
+    }
 
     @DynamicPropertySource
     static void datasourceProperties(DynamicPropertyRegistry registry) {

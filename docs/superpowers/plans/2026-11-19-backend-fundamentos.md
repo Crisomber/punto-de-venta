@@ -42,15 +42,15 @@
 - Consumes: nothing (first task).
 - Produces: a bootable Spring Boot app reading DB credentials from `SUPABASE_DB_URL` / `SUPABASE_DB_USERNAME` / `SUPABASE_DB_PASSWORD` env vars; `AbstractIntegrationTest` — an abstract class that starts a shared `PostgreSQLContainer<?>` (image `postgres:16-alpine`) once per test JVM and registers it as the datasource via `@DynamicPropertySource`, annotated `@SpringBootTest` (default **MOCK** web environment — deliberate: `MockMvc` dispatches in-process on the test's own thread, which is what lets `@Transactional` roll back every test method's writes; `RANDOM_PORT` would spin up a real server on another thread and break that rollback) + `@AutoConfigureMockMvc` + `@Transactional`. Every later task's test class extends this, so no test needs to clean up the rows it inserts — each method's writes vanish when it ends, which is also what keeps `username = 'admin'` (seeded once by Flyway in Task 3) and ad hoc test usernames like `"ana"` from ever colliding across test methods.
 
-- [ ] **Step 1: Generate the Spring Boot project**
+- [x] **Step 1: Generate the Spring Boot project**
 
 Use Spring Initializr (web UI, `curl start.spring.io`, or your IDE) with: Group `com.posrestaurante`, Artifact `backend`, Java 21, Maven, Spring Boot latest stable 3.x, dependencies: Spring Web, Spring Data JPA, Spring Security, Validation, PostgreSQL Driver, Flyway Migration. Place the generated project at `backend/`.
 
-- [ ] **Step 2: Add Lombok, JJWT, and Testcontainers dependencies to `backend/pom.xml`**
+- [x] **Step 2: Add Lombok, JJWT, and Testcontainers dependencies to `backend/pom.xml`**
 
 Add `org.projectlombok:lombok` (provided scope), `io.jsonwebtoken:jjwt-api:0.12.6`, `io.jsonwebtoken:jjwt-impl:0.12.6` (runtime), `io.jsonwebtoken:jjwt-jackson:0.12.6` (runtime), and test-scope `org.testcontainers:postgresql` + `org.testcontainers:junit-jupiter` (use the Spring Boot-managed Testcontainers BOM version — add `spring-boot-testcontainers` test-scope starter so versions stay aligned).
 
-- [ ] **Step 3: Configure `backend/src/main/resources/application.yml`**
+- [x] **Step 3: Configure `backend/src/main/resources/application.yml`**
 
 ```yaml
 spring:
@@ -75,17 +75,21 @@ management:
 
 `ddl-auto: validate` is deliberate: Flyway (not Hibernate) owns schema changes from Task 2 onward; Hibernate only checks its mappings match.
 
-- [ ] **Step 4: Write `AbstractIntegrationTest`**
+- [x] **Step 4: Write `AbstractIntegrationTest`**
+
+Do **not** use `@Testcontainers`/`@Container` here: that JUnit5 extension ties a container's start/stop to each *test class's own* lifecycle, so even a `static` field gets torn down between test classes in the same JVM fork — the next class's context then points at a dead container and every test fails with "Connection refused", while each class still passes in isolation. Start the container manually in a static initializer instead (the official Testcontainers singleton pattern); only Ryuk then cleans it up, at JVM exit.
 
 ```java
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@Testcontainers
 public abstract class AbstractIntegrationTest {
-    @Container
     static final PostgreSQLContainer<?> POSTGRES =
         new PostgreSQLContainer<>("postgres:16-alpine");
+
+    static {
+        POSTGRES.start();
+    }
 
     @DynamicPropertySource
     static void datasourceProperties(DynamicPropertyRegistry registry) {
@@ -98,7 +102,7 @@ public abstract class AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 5: Write `BackendApplicationTests`**
+- [x] **Step 5: Write `BackendApplicationTests`**
 
 ```java
 class BackendApplicationTests extends AbstractIntegrationTest {
@@ -111,12 +115,12 @@ class BackendApplicationTests extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 6: Run the test and verify it passes**
+- [x] **Step 6: Run the test and verify it passes**
 
 Run: `cd backend && mvn -q test -Dtest=BackendApplicationTests`
 Expected: PASS — Testcontainers pulls `postgres:16-alpine`, the app context boots against it, `/actuator/health` returns `{"status":"UP"}`. (Requires Docker running locally.)
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/
@@ -144,7 +148,7 @@ git commit -m "chore: scaffold Spring Boot backend with Testcontainers-backed in
 - Consumes: `AbstractIntegrationTest` (Task 1).
 - Produces: `Rol` enum `{DUENO, MESERO, CAJERO, CHEF}`; `Estacion` enum `{P1, P2}`; `Usuario` entity (`UUID id`, `String nombre`, `Rol rol`, `Estacion estacion` nullable, `String username` nullable, `String passwordHash` nullable, `String pinHash` nullable, `boolean activo`); `UsuarioRepository extends JpaRepository<Usuario, UUID>` with `Optional<Usuario> findByUsernameAndActivoTrue(String username)` and `List<Usuario> findByActivoTrueAndRolNot(Rol rol)`; `RegistroAsistencia` entity (`UUID id`, `Usuario usuario`, `Instant fechaHora`, `TipoAsistencia tipo`); `RegistroAsistenciaRepository extends JpaRepository<RegistroAsistencia, UUID>` with `long countByUsuarioId(UUID usuarioId)`. Also produces `TestUsuarios`, a test-only factory class with `static Usuario dueno(String username, String passwordHash, boolean activo)` and `static Usuario staff(String nombre, Rol rol, String pinHash, boolean activo)` (sets `estacion = Estacion.P1` automatically when `rol == CHEF`, else `null`) — every later task's tests build their fixtures through this, not ad hoc.
 
-- [ ] **Step 1: Write `V1__create_usuario.sql`**
+- [x] **Step 1: Write `V1__create_usuario.sql`**
 
 ```sql
 CREATE TABLE usuario (
@@ -159,7 +163,7 @@ CREATE TABLE usuario (
 );
 ```
 
-- [ ] **Step 2: Write `V2__create_registro_asistencia.sql`**
+- [x] **Step 2: Write `V2__create_registro_asistencia.sql`**
 
 ```sql
 CREATE TABLE registro_asistencia (
@@ -170,7 +174,7 @@ CREATE TABLE registro_asistencia (
 );
 ```
 
-- [ ] **Step 3: Write the failing persistence test**
+- [x] **Step 3: Write the failing persistence test**
 
 ```java
 class UsuarioPersistenceTest extends AbstractIntegrationTest {
@@ -201,21 +205,21 @@ class UsuarioPersistenceTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it fails**
+- [x] **Step 4: Run the test to verify it fails**
 
 Run: `cd backend && mvn -q test -Dtest=UsuarioPersistenceTest`
 Expected: FAIL (classes `Usuario`, `UsuarioRepository`, etc. don't exist yet).
 
-- [ ] **Step 5: Implement `Rol`, `Estacion`, `Usuario`, `UsuarioRepository`, `TipoAsistencia`, `RegistroAsistencia`, `RegistroAsistenciaRepository`, `TestUsuarios`**
+- [x] **Step 5: Implement `Rol`, `Estacion`, `Usuario`, `UsuarioRepository`, `TipoAsistencia`, `RegistroAsistencia`, `RegistroAsistenciaRepository`, `TestUsuarios`**
 
 `Usuario` and `RegistroAsistencia` are `@Entity` classes mapped with `@Enumerated(EnumType.STRING)` for every enum field, `@Id private UUID id = UUID.randomUUID();` (application-generated, no DB sequence). `RegistroAsistencia.usuario` is `@ManyToOne(fetch = LAZY)` with `@JoinColumn(name = "usuario_id")`. Use Lombok `@Getter @Setter` (or `@Data`) to avoid boilerplate. `TestUsuarios.dueno(...)` builds a `Usuario` with `rol = DUENO`, the given username/passwordHash/activo, `pinHash = null`, `estacion = null`. `TestUsuarios.staff(...)` builds a `Usuario` with the given rol/pinHash/activo, `username = null`, `passwordHash = null`, `estacion = (rol == CHEF ? Estacion.P1 : null)`. Neither helper calls `usuarioRepository.save(...)` — callers save when they need the id populated.
 
-- [ ] **Step 6: Run the test and verify it passes**
+- [x] **Step 6: Run the test and verify it passes**
 
 Run: `cd backend && mvn -q test -Dtest=UsuarioPersistenceTest`
 Expected: PASS — Flyway applies V1/V2 against the Testcontainers Postgres, all three assertions hold.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/main/resources/db/migration backend/src/main/java/com/posrestaurante/backend/usuario backend/src/main/java/com/posrestaurante/backend/asistencia backend/src/test/java/com/posrestaurante/backend/usuario backend/src/test/java/com/posrestaurante/backend/testsupport/TestUsuarios.java
