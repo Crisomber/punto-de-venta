@@ -14,4 +14,6 @@ public interface OrdenItemRepository extends JpaRepository<OrdenItem, UUID> {
 
     List<OrdenItem> findByTicket(Ticket ticket);
 
+    List<OrdenItem> findByOrden_IdIn(List<UUID> ordenIds);
+
 }
