@@ -841,7 +841,7 @@ git commit -m "feat: dueno can activate/deactivate platillos"
 - Consumes: `PlatilloController.toResponse` (Task 3).
 - Produces: `EditarPlatilloRequest(String nombre, String descripcion, BigDecimal precio, UUID categoriaId, Estacion estacion, Set<UUID> modificadorIds)` — every field optional, `null` means "don't change it", **except** `modificadorIds`, where `null` means "don't change" but an explicit empty set `[]` means "clear all modificadores" (see Review Focus — these are genuinely different inputs, both expressible because a JSON array's absence and its emptiness are distinguishable, unlike a bare boolean). `PATCH /api/platillos/{id}` — `200` + `PlatilloResponse` on success, `404` if `id` doesn't match any platillo, `400` if `precio` is provided and `<= 0`, or if `categoriaId`/any `modificadorIds` entry is provided and doesn't match an existing row; `403`/`401` same as every other mutating endpoint in this plan.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 class EditarPlatilloControllerTest extends AbstractIntegrationTest {
@@ -929,12 +929,12 @@ class EditarPlatilloControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=EditarPlatilloControllerTest`
 Expected: FAIL (404 — no generic `PATCH /{id}` route yet).
 
-- [ ] **Step 3: Implement `EditarPlatilloRequest` and `PlatilloController.editarPlatillo`**
+- [x] **Step 3: Implement `EditarPlatilloRequest` and `PlatilloController.editarPlatillo`**
 
 ```java
 @PatchMapping("/{id}")
@@ -975,17 +975,17 @@ public PlatilloResponse editarPlatillo(@PathVariable UUID id, @RequestBody Edita
 }
 ```
 
-- [ ] **Step 4: Run the test and verify it passes**
+- [x] **Step 4: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=EditarPlatilloControllerTest`
 Expected: PASS, all 9 cases.
 
-- [ ] **Step 5: Run the full suite**
+- [x] **Step 5: Run the full suite**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test`
 Expected: PASS — every test from this plan and both earlier plans, together.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/platillo backend/src/test/java/com/posrestaurante/backend/platillo/EditarPlatilloControllerTest.java
