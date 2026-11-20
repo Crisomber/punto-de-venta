@@ -48,7 +48,7 @@
 - Consumes: `JwtService`, `Rol` (used by tests to mint tokens for various roles — no DB row needed, same pattern as the usuarios-admin plan's tests).
 - Produces: `EstadoMesa {LIBRE, OCUPADA}`; `Mesa(UUID id, int numero, EstadoMesa estado)`; `MesaRepository extends JpaRepository<Mesa, UUID>` with `Optional<Mesa> findByNumero(int numero)`; `CrearMesaRequest(Integer numero)`; `MesaResponse(UUID id, int numero, EstadoMesa estado)`; `POST /api/mesas` — `201` + `MesaResponse` (`estado` always `LIBRE`) on success, `400` if `numero` is missing or `<= 0`, `409` if a mesa with that `numero` already exists; `GET /api/mesas` — `200` + `List<MesaResponse>`, any authenticated role; `DELETE /api/mesas/{id}` — `204` on success, `404` if `id` doesn't match any mesa. Adds, in this order (first match wins), to `SecurityConfig`'s `authorizeHttpRequests`: `.requestMatchers(HttpMethod.GET, "/api/mesas/**").authenticated()` then `.requestMatchers("/api/mesas/**").hasRole("DUENO")` — both before the existing `.anyRequest().authenticated()`.
 
-- [ ] **Step 1: Write the failing controller test**
+- [x] **Step 1: Write the failing controller test**
 
 ```java
 class MesaControllerTest extends AbstractIntegrationTest {
@@ -116,12 +116,12 @@ class MesaControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=MesaControllerTest`
 Expected: FAIL — every case 404s (no route yet).
 
-- [ ] **Step 3: Write `V4__create_mesa.sql`**
+- [x] **Step 3: Write `V4__create_mesa.sql`**
 
 ```sql
 CREATE TABLE mesa (
@@ -131,7 +131,7 @@ CREATE TABLE mesa (
 );
 ```
 
-- [ ] **Step 4: Add the `SecurityConfig` rules**
+- [x] **Step 4: Add the `SecurityConfig` rules**
 
 ```java
 .authorizeHttpRequests(auth -> auth
@@ -142,7 +142,7 @@ CREATE TABLE mesa (
         .anyRequest().authenticated())
 ```
 
-- [ ] **Step 5: Implement `EstadoMesa`, `Mesa`, `MesaRepository`, `CrearMesaRequest`, `MesaResponse`, `MesaController`**
+- [x] **Step 5: Implement `EstadoMesa`, `Mesa`, `MesaRepository`, `CrearMesaRequest`, `MesaResponse`, `MesaController`**
 
 ```java
 @RestController
@@ -194,17 +194,17 @@ public class MesaController {
 }
 ```
 
-- [ ] **Step 6: Run the test and verify it passes**
+- [x] **Step 6: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=MesaControllerTest`
 Expected: PASS, all 8 cases.
 
-- [ ] **Step 7: Run the full suite**
+- [x] **Step 7: Run the full suite**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test`
 Expected: PASS — this task's tests plus every test from backend-fundamentos and aprovisionamiento-personal, together.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/src/main/resources/db/migration/V4__create_mesa.sql backend/src/main/java/com/posrestaurante/backend/mesa backend/src/main/java/com/posrestaurante/backend/security/SecurityConfig.java backend/src/test/java/com/posrestaurante/backend/mesa

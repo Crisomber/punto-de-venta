@@ -3,6 +3,7 @@ package com.posrestaurante.backend.security;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -18,6 +19,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/api/auth/login/**", "/api/auth/staff").permitAll()
                         .requestMatchers("/api/usuarios/**").hasRole("DUENO")
+                        .requestMatchers(HttpMethod.GET, "/api/mesas/**").authenticated()
+                        .requestMatchers("/api/mesas/**").hasRole("DUENO")
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint(
                         (req, res, ex) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
