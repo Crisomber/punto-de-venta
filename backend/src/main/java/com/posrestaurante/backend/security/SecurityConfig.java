@@ -30,6 +30,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/ordenes/**").hasRole("MESERO")
                         .requestMatchers(HttpMethod.GET, "/api/tickets/propios").hasRole("CHEF")
                         .requestMatchers(HttpMethod.GET, "/api/tickets/**").authenticated()
+                        .requestMatchers("/api/caja/**").hasRole("CAJERO")
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint(
                         (req, res, ex) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
