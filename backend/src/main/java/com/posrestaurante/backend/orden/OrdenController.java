@@ -12,6 +12,10 @@ import com.posrestaurante.backend.orden.dto.OrdenResponse;
 import com.posrestaurante.backend.platillo.Platillo;
 import com.posrestaurante.backend.platillo.PlatilloRepository;
 import com.posrestaurante.backend.security.AuthenticatedUser;
+import com.posrestaurante.backend.ticket.Ticket;
+import com.posrestaurante.backend.ticket.TicketEstado;
+import com.posrestaurante.backend.ticket.TicketRepository;
+import com.posrestaurante.backend.usuario.Estacion;
 import com.posrestaurante.backend.usuario.Usuario;
 import com.posrestaurante.backend.usuario.UsuarioRepository;
 import org.springframework.http.HttpStatus;
@@ -26,7 +30,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -41,15 +47,17 @@ public class OrdenController {
     private final MesaRepository mesaRepository;
     private final UsuarioRepository usuarioRepository;
     private final PlatilloRepository platilloRepository;
+    private final TicketRepository ticketRepository;
 
     public OrdenController(OrdenRepository ordenRepository, OrdenItemRepository ordenItemRepository,
                             MesaRepository mesaRepository, UsuarioRepository usuarioRepository,
-                            PlatilloRepository platilloRepository) {
+                            PlatilloRepository platilloRepository, TicketRepository ticketRepository) {
         this.ordenRepository = ordenRepository;
         this.ordenItemRepository = ordenItemRepository;
         this.mesaRepository = mesaRepository;
         this.usuarioRepository = usuarioRepository;
         this.platilloRepository = platilloRepository;
+        this.ticketRepository = ticketRepository;
     }
 
     @PostMapping
@@ -140,6 +148,42 @@ public class OrdenController {
         item.setEstado(EstadoOrdenItem.PENDIENTE);
         item.setModificadores(modificadores);
         return ordenItemRepository.save(item);
+    }
+
+    @PostMapping("/{id}/enviar")
+    public OrdenResponse enviarOrden(@PathVariable UUID id) {
+        Orden orden = ordenRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (orden.getEstado() != EstadoOrden.ABIERTA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "la orden ya fue enviada o no esta abierta");
+        }
+        List<OrdenItem> pendientes = ordenItemRepository.findByOrdenAndTicketIsNull(orden);
+        if (pendientes.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "no hay platillos para enviar");
+        }
+
+        generarTickets(orden, pendientes);
+        orden.setEstado(EstadoOrden.ENVIADA);
+        ordenRepository.save(orden);
+
+        return toResponse(orden, obtenerItems(orden));
+    }
+
+    private void generarTickets(Orden orden, List<OrdenItem> items) {
+        Map<Estacion, Ticket> ticketsPorEstacion = new HashMap<>();
+        for (OrdenItem item : items) {
+            Estacion estacion = item.getPlatillo().getEstacion();
+            Ticket ticket = ticketsPorEstacion.computeIfAbsent(estacion, e -> {
+                Ticket nuevo = new Ticket();
+                nuevo.setOrden(orden);
+                nuevo.setEstacion(e);
+                nuevo.setFechaGenerado(Instant.now());
+                nuevo.setEstado(TicketEstado.PENDIENTE);
+                return ticketRepository.save(nuevo);
+            });
+            item.setTicket(ticket);
+            ordenItemRepository.save(item);
+        }
     }
 
     private List<OrdenItemResponse> obtenerItems(Orden orden) {

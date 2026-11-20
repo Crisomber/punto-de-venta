@@ -2,6 +2,7 @@ package com.posrestaurante.backend.orden;
 
 import com.posrestaurante.backend.modificador.Modificador;
 import com.posrestaurante.backend.platillo.Platillo;
+import com.posrestaurante.backend.ticket.Ticket;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -36,6 +37,10 @@ public class OrdenItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "platillo_id")
     private Platillo platillo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ticket_id")
+    private Ticket ticket;
 
     private int cantidad;
     private BigDecimal precioUnitario;

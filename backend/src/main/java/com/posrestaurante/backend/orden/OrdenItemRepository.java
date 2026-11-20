@@ -9,4 +9,6 @@ public interface OrdenItemRepository extends JpaRepository<OrdenItem, UUID> {
 
     List<OrdenItem> findByOrden(Orden orden);
 
+    List<OrdenItem> findByOrdenAndTicketIsNull(Orden orden);
+
 }

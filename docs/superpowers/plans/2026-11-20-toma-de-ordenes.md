@@ -610,7 +610,7 @@ git commit -m "feat: mesero can add platillos to an open orden"
 - Consumes: `OrdenItem`/`OrdenItemRepository` (Task 2); `Estacion` (backend-fundamentos, reused — same enum `Platillo.estacion` already uses).
 - Produces: `TicketEstado {PENDIENTE, IMPRESO}` (only `PENDIENTE` is ever set — `IMPRESO` is Fase 2 printer integration, spec §7); `Ticket(UUID id, Orden orden, Estacion estacion, Instant fechaGenerado, TicketEstado estado)`; `TicketRepository extends JpaRepository<Ticket, UUID>`; `List<OrdenItem> OrdenItemRepository.findByOrdenAndTicketIsNull(Orden orden)`. `POST /api/ordenes/{id}/enviar` — `200` + the updated `OrdenResponse` on success (orden now `ENVIADA`, every previously-ticketless item now has a `ticket`), `404` if `id` doesn't match any orden, `409` if the orden's `estado` isn't `ABIERTA`, `400` if there are no ticketless items to send. Also produces the private `generarTickets(Orden, List<OrdenItem>)` helper — group by `estacion`, one `Ticket` per represented `estacion`, reused as-is by Task 4.
 
-- [ ] **Step 1: Write the failing controller test**
+- [x] **Step 1: Write the failing controller test**
 
 ```java
 class EnviarOrdenControllerTest extends AbstractIntegrationTest {
@@ -728,12 +728,12 @@ class EnviarOrdenControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=EnviarOrdenControllerTest`
 Expected: FAIL — every case 404s.
 
-- [ ] **Step 3: Write `V12__create_ticket.sql`**
+- [x] **Step 3: Write `V12__create_ticket.sql`**
 
 ```sql
 CREATE TABLE ticket (
@@ -748,7 +748,7 @@ ALTER TABLE orden_item
     ADD COLUMN ticket_id UUID REFERENCES ticket(id);
 ```
 
-- [ ] **Step 4: Implement `TicketEstado`, `Ticket`, `TicketRepository`, `OrdenItemRepository.findByOrdenAndTicketIsNull`, `OrdenController.enviarOrden` and the shared `generarTickets` helper**
+- [x] **Step 4: Implement `TicketEstado`, `Ticket`, `TicketRepository`, `OrdenItemRepository.findByOrdenAndTicketIsNull`, `OrdenController.enviarOrden` and the shared `generarTickets` helper**
 
 ```java
 @Entity
@@ -824,17 +824,17 @@ private void generarTickets(Orden orden, List<OrdenItem> items) {
 
 (Add `TicketRepository ticketRepository` as a new constructor-injected dependency of `OrdenController`.)
 
-- [ ] **Step 5: Run the test and verify it passes**
+- [x] **Step 5: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=EnviarOrdenControllerTest`
 Expected: PASS, all 7 cases.
 
-- [ ] **Step 6: Run the full suite**
+- [x] **Step 6: Run the full suite**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test`
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/main/resources/db/migration/V12__create_ticket.sql backend/src/main/java/com/posrestaurante/backend/ticket backend/src/main/java/com/posrestaurante/backend/orden backend/src/test/java/com/posrestaurante/backend/orden/EnviarOrdenControllerTest.java
