@@ -7,6 +7,7 @@ import com.posrestaurante.backend.modificador.ModificadorRepository;
 import com.posrestaurante.backend.platillo.dto.CrearPlatilloRequest;
 import com.posrestaurante.backend.platillo.dto.PlatilloResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -71,6 +73,13 @@ public class PlatilloController {
         platilloRepository.save(platillo);
 
         return toResponse(platillo);
+    }
+
+    @GetMapping
+    public List<PlatilloResponse> listarPlatillos() {
+        return platilloRepository.findAll().stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private PlatilloResponse toResponse(Platillo platillo) {

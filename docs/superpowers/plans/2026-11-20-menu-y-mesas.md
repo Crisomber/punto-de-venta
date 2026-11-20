@@ -639,7 +639,7 @@ git commit -m "feat: dueno can create platillos with categoria and modificadores
 - Consumes: `PlatilloController.toResponse` (Task 3).
 - Produces: `GET /api/platillos` — `200` + `List<PlatilloResponse>` of **every** platillo, active or not (same admin-listing precedent as `GET /api/usuarios`), any authenticated role; `401` with no token. No `403` case here — unlike the usuarios-admin plan, listing is intentionally open to every role (see Global Constraints), so there's no non-DUENO-rejection to test.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 class ListarPlatillosControllerTest extends AbstractIntegrationTest {
@@ -687,12 +687,12 @@ class ListarPlatillosControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=ListarPlatillosControllerTest`
 Expected: FAIL (404 — no `GET` route yet).
 
-- [ ] **Step 3: Implement `PlatilloController.listarPlatillos`**
+- [x] **Step 3: Implement `PlatilloController.listarPlatillos`**
 
 ```java
 @GetMapping
@@ -703,12 +703,12 @@ public List<PlatilloResponse> listarPlatillos() {
 }
 ```
 
-- [ ] **Step 4: Run the test and verify it passes**
+- [x] **Step 4: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=ListarPlatillosControllerTest`
 Expected: PASS, both cases.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/platillo/PlatilloController.java backend/src/test/java/com/posrestaurante/backend/platillo/ListarPlatillosControllerTest.java
