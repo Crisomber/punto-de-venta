@@ -27,6 +27,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/platillos/**").hasRole("DUENO")
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/**").authenticated()
                         .requestMatchers("/api/ordenes/**").hasRole("MESERO")
+                        .requestMatchers(HttpMethod.GET, "/api/tickets/propios").hasRole("CHEF")
                         .requestMatchers(HttpMethod.GET, "/api/tickets/**").authenticated()
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint(

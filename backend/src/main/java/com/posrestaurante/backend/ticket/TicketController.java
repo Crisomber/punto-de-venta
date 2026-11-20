@@ -5,12 +5,17 @@ import com.posrestaurante.backend.orden.Orden;
 import com.posrestaurante.backend.orden.OrdenItem;
 import com.posrestaurante.backend.orden.OrdenItemRepository;
 import com.posrestaurante.backend.orden.dto.OrdenItemResponse;
+import com.posrestaurante.backend.security.AuthenticatedUser;
 import com.posrestaurante.backend.ticket.dto.TicketResponse;
+import com.posrestaurante.backend.usuario.Usuario;
 import com.posrestaurante.backend.usuario.UsuarioRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Set;
@@ -36,6 +41,14 @@ public class TicketController {
     @GetMapping
     public List<TicketResponse> listarTickets() {
         return ticketRepository.findAll().stream().map(this::toResponse).toList();
+    }
+
+    @GetMapping("/propios")
+    public List<TicketResponse> misTickets(Authentication authentication) {
+        AuthenticatedUser caller = (AuthenticatedUser) authentication.getPrincipal();
+        Usuario chef = usuarioRepository.findById(caller.usuarioId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        return ticketRepository.findByEstacion(chef.getEstacion()).stream().map(this::toResponse).toList();
     }
 
     private TicketResponse toResponse(Ticket ticket) {
