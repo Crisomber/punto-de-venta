@@ -853,7 +853,7 @@ git commit -m "feat: mesero can send an orden to cocina, splitting it into one t
 - Consumes: `generarTickets` (Task 3).
 - Produces no new types. `POST /api/ordenes/{id}/items` now also accepts an orden in `ENVIADA` (in addition to `ABIERTA`); when it's `ENVIADA`, every item just created in this call is immediately grouped into ticket(s) by `estacion` via `generarTickets`, same grouping rule as Task 3, applied only to *this call's* items (not re-grouping anything already ticketed).
 
-- [ ] **Step 1: Write the failing test additions**
+- [x] **Step 1: Write the failing test additions**
 
 ```java
 // added to AgregarItemsControllerTest:
@@ -915,12 +915,12 @@ void addingItemToOpenOrderStillDoesNotCreateATicket() throws Exception {
 
 (`AgregarItemsControllerTest` needs a new `@Autowired TicketRepository ticketRepository` field for these.)
 
-- [ ] **Step 2: Run the test to verify the new cases fail**
+- [x] **Step 2: Run the test to verify the new cases fail**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=AgregarItemsControllerTest`
 Expected: FAIL on the two new `ENVIADA` cases (`409` instead of `200` — Task 2's check still only accepts `ABIERTA`); the regression case passes already.
 
-- [ ] **Step 3: Widen `OrdenController.agregarItems`**
+- [x] **Step 3: Widen `OrdenController.agregarItems`**
 
 ```java
 @PostMapping("/{id}/items")
@@ -949,17 +949,17 @@ public OrdenResponse agregarItems(@PathVariable UUID id, @RequestBody AgregarIte
 
 (`crearOrdenItem` must return the saved `OrdenItem` — it already does, from Task 2 — so `nuevos` collects exactly the items this call created, nothing pre-existing.)
 
-- [ ] **Step 4: Run the test and verify it passes**
+- [x] **Step 4: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=AgregarItemsControllerTest`
 Expected: PASS, all 11 cases (8 from Task 2 + 3 new).
 
-- [ ] **Step 5: Run the full suite**
+- [x] **Step 5: Run the full suite**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/orden/OrdenController.java backend/src/test/java/com/posrestaurante/backend/orden/AgregarItemsControllerTest.java

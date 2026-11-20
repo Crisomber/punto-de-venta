@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,15 +107,20 @@ public class OrdenController {
     public OrdenResponse agregarItems(@PathVariable UUID id, @RequestBody AgregarItemsRequest request) {
         Orden orden = ordenRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if (orden.getEstado() != EstadoOrden.ABIERTA) {
+        if (orden.getEstado() != EstadoOrden.ABIERTA && orden.getEstado() != EstadoOrden.ENVIADA) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "la orden no acepta mas platillos en su estado actual");
         }
         if (request.items() == null || request.items().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "items requeridos");
         }
 
+        List<OrdenItem> nuevos = new ArrayList<>();
         for (ItemRequest itemRequest : request.items()) {
-            crearOrdenItem(orden, itemRequest);
+            nuevos.add(crearOrdenItem(orden, itemRequest));
+        }
+
+        if (orden.getEstado() == EstadoOrden.ENVIADA) {
+            generarTickets(orden, nuevos);
         }
 
         return toResponse(orden, obtenerItems(orden));

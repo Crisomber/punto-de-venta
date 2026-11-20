@@ -9,6 +9,7 @@ import com.posrestaurante.backend.platillo.PlatilloRepository;
 import com.posrestaurante.backend.security.JwtService;
 import com.posrestaurante.backend.testsupport.AbstractIntegrationTest;
 import com.posrestaurante.backend.testsupport.TestUsuarios;
+import com.posrestaurante.backend.ticket.TicketRepository;
 import com.posrestaurante.backend.usuario.Estacion;
 import com.posrestaurante.backend.usuario.Rol;
 import com.posrestaurante.backend.usuario.Usuario;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,6 +48,9 @@ class AgregarItemsControllerTest extends AbstractIntegrationTest {
 
     @Autowired
     UsuarioRepository usuarioRepository;
+
+    @Autowired
+    TicketRepository ticketRepository;
 
     @Autowired
     JwtService jwtService;
@@ -185,6 +190,60 @@ class AgregarItemsControllerTest extends AbstractIntegrationTest {
                         .contentType(APPLICATION_JSON)
                         .content("{\"items\":[{\"platilloId\":\"" + platillo.getId() + "\",\"cantidad\":1}]}"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void addingItemToSentOrderImmediatelyCreatesNewTicketForItsEstacion() throws Exception {
+        Orden orden = unaOrdenAbierta();
+        orden.setEstado(EstadoOrden.ENVIADA);
+        ordenRepository.save(orden);
+        Platillo platillo = unPlatillo(true); // estacion P2 per the helper's default
+
+        mockMvc.perform(post("/api/ordenes/" + orden.getId() + "/items")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.MESERO))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"items\":[{\"platilloId\":\"" + platillo.getId() + "\",\"cantidad\":1}]}"))
+                .andExpect(status().isOk());
+
+        List<OrdenItem> items = ordenItemRepository.findByOrden(orden);
+        assertThat(items).hasSize(1);
+        assertThat(items.get(0).getTicket()).isNotNull();
+        assertThat(items.get(0).getTicket().getEstacion()).isEqualTo(Estacion.P2);
+    }
+
+    @Test
+    void addingItemsOfDifferentEstacionesToSentOrderCreatesTwoNewTickets() throws Exception {
+        Orden orden = unaOrdenAbierta();
+        orden.setEstado(EstadoOrden.ENVIADA);
+        ordenRepository.save(orden);
+        Platillo p1 = unPlatillo(true);
+        p1.setEstacion(Estacion.P1);
+        platilloRepository.save(p1);
+        Platillo p2 = unPlatillo(true);
+
+        mockMvc.perform(post("/api/ordenes/" + orden.getId() + "/items")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.MESERO))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"items\":[{\"platilloId\":\"" + p1.getId() + "\",\"cantidad\":1},"
+                                + "{\"platilloId\":\"" + p2.getId() + "\",\"cantidad\":1}]}"))
+                .andExpect(status().isOk());
+
+        assertThat(ticketRepository.findAll()).hasSize(2);
+    }
+
+    @Test
+    void addingItemToOpenOrderStillDoesNotCreateATicket() throws Exception {
+        // regression: Task 2's core behavior on an ABIERTA orden must still hold
+        Orden orden = unaOrdenAbierta();
+        Platillo platillo = unPlatillo(true);
+
+        mockMvc.perform(post("/api/ordenes/" + orden.getId() + "/items")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.MESERO))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"items\":[{\"platilloId\":\"" + platillo.getId() + "\",\"cantidad\":1}]}"))
+                .andExpect(status().isOk());
+
+        assertThat(ticketRepository.findAll()).isEmpty();
     }
 
 }
