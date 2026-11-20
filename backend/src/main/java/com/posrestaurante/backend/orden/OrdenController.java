@@ -7,6 +7,7 @@ import com.posrestaurante.backend.modificador.Modificador;
 import com.posrestaurante.backend.orden.dto.AbrirOrdenRequest;
 import com.posrestaurante.backend.orden.dto.AgregarItemsRequest;
 import com.posrestaurante.backend.orden.dto.AgregarItemsRequest.ItemRequest;
+import com.posrestaurante.backend.orden.dto.EstadoOrdenItemRequest;
 import com.posrestaurante.backend.orden.dto.OrdenItemResponse;
 import com.posrestaurante.backend.orden.dto.OrdenResponse;
 import com.posrestaurante.backend.platillo.Platillo;
@@ -22,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -218,6 +220,33 @@ public class OrdenController {
         orden.setFechaCierre(Instant.now());
         ordenRepository.save(orden);
         return toResponse(orden, obtenerItems(orden));
+    }
+
+    @PatchMapping("/items/{id}/estado")
+    public OrdenItemResponse cambiarEstadoItem(@PathVariable UUID id, @RequestBody EstadoOrdenItemRequest request,
+                                                Authentication authentication) {
+        if (request.estado() != EstadoOrdenItem.EN_PREPARACION && request.estado() != EstadoOrdenItem.LISTO) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "estado invalido");
+        }
+        OrdenItem item = ordenItemRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (item.getTicket() == null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "el platillo aun no ha sido enviado a cocina");
+        }
+
+        AuthenticatedUser caller = (AuthenticatedUser) authentication.getPrincipal();
+        Usuario chef = usuarioRepository.findById(caller.usuarioId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        if (chef.getEstacion() != Estacion.P2) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "esta estacion no usa confirmacion de estado");
+        }
+        if (item.getTicket().getEstacion() != chef.getEstacion()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "no puedes modificar platillos de otra estacion");
+        }
+
+        item.setEstado(request.estado());
+        ordenItemRepository.save(item);
+        return toItemResponse(item);
     }
 
     private List<OrdenItemResponse> obtenerItems(Orden orden) {

@@ -26,6 +26,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/platillos/**").authenticated()
                         .requestMatchers("/api/platillos/**").hasRole("DUENO")
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/**").authenticated()
+                        .requestMatchers("/api/ordenes/items/**").hasRole("CHEF")
                         .requestMatchers("/api/ordenes/**").hasRole("MESERO")
                         .requestMatchers(HttpMethod.GET, "/api/tickets/propios").hasRole("CHEF")
                         .requestMatchers(HttpMethod.GET, "/api/tickets/**").authenticated()
