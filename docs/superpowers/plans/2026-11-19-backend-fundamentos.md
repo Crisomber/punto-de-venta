@@ -42,15 +42,15 @@
 - Consumes: nothing (first task).
 - Produces: a bootable Spring Boot app reading DB credentials from `SUPABASE_DB_URL` / `SUPABASE_DB_USERNAME` / `SUPABASE_DB_PASSWORD` env vars; `AbstractIntegrationTest` — an abstract class that starts a shared `PostgreSQLContainer<?>` (image `postgres:16-alpine`) once per test JVM and registers it as the datasource via `@DynamicPropertySource`, annotated `@SpringBootTest` (default **MOCK** web environment — deliberate: `MockMvc` dispatches in-process on the test's own thread, which is what lets `@Transactional` roll back every test method's writes; `RANDOM_PORT` would spin up a real server on another thread and break that rollback) + `@AutoConfigureMockMvc` + `@Transactional`. Every later task's test class extends this, so no test needs to clean up the rows it inserts — each method's writes vanish when it ends, which is also what keeps `username = 'admin'` (seeded once by Flyway in Task 3) and ad hoc test usernames like `"ana"` from ever colliding across test methods.
 
-- [ ] **Step 1: Generate the Spring Boot project**
+- [x] **Step 1: Generate the Spring Boot project**
 
 Use Spring Initializr (web UI, `curl start.spring.io`, or your IDE) with: Group `com.posrestaurante`, Artifact `backend`, Java 21, Maven, Spring Boot latest stable 3.x, dependencies: Spring Web, Spring Data JPA, Spring Security, Validation, PostgreSQL Driver, Flyway Migration. Place the generated project at `backend/`.
 
-- [ ] **Step 2: Add Lombok, JJWT, and Testcontainers dependencies to `backend/pom.xml`**
+- [x] **Step 2: Add Lombok, JJWT, and Testcontainers dependencies to `backend/pom.xml`**
 
 Add `org.projectlombok:lombok` (provided scope), `io.jsonwebtoken:jjwt-api:0.12.6`, `io.jsonwebtoken:jjwt-impl:0.12.6` (runtime), `io.jsonwebtoken:jjwt-jackson:0.12.6` (runtime), and test-scope `org.testcontainers:postgresql` + `org.testcontainers:junit-jupiter` (use the Spring Boot-managed Testcontainers BOM version — add `spring-boot-testcontainers` test-scope starter so versions stay aligned).
 
-- [ ] **Step 3: Configure `backend/src/main/resources/application.yml`**
+- [x] **Step 3: Configure `backend/src/main/resources/application.yml`**
 
 ```yaml
 spring:
@@ -75,17 +75,21 @@ management:
 
 `ddl-auto: validate` is deliberate: Flyway (not Hibernate) owns schema changes from Task 2 onward; Hibernate only checks its mappings match.
 
-- [ ] **Step 4: Write `AbstractIntegrationTest`**
+- [x] **Step 4: Write `AbstractIntegrationTest`**
+
+Do **not** use `@Testcontainers`/`@Container` here: that JUnit5 extension ties a container's start/stop to each *test class's own* lifecycle, so even a `static` field gets torn down between test classes in the same JVM fork — the next class's context then points at a dead container and every test fails with "Connection refused", while each class still passes in isolation. Start the container manually in a static initializer instead (the official Testcontainers singleton pattern); only Ryuk then cleans it up, at JVM exit.
 
 ```java
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@Testcontainers
 public abstract class AbstractIntegrationTest {
-    @Container
     static final PostgreSQLContainer<?> POSTGRES =
         new PostgreSQLContainer<>("postgres:16-alpine");
+
+    static {
+        POSTGRES.start();
+    }
 
     @DynamicPropertySource
     static void datasourceProperties(DynamicPropertyRegistry registry) {
@@ -98,7 +102,7 @@ public abstract class AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 5: Write `BackendApplicationTests`**
+- [x] **Step 5: Write `BackendApplicationTests`**
 
 ```java
 class BackendApplicationTests extends AbstractIntegrationTest {
@@ -111,12 +115,12 @@ class BackendApplicationTests extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 6: Run the test and verify it passes**
+- [x] **Step 6: Run the test and verify it passes**
 
 Run: `cd backend && mvn -q test -Dtest=BackendApplicationTests`
 Expected: PASS — Testcontainers pulls `postgres:16-alpine`, the app context boots against it, `/actuator/health` returns `{"status":"UP"}`. (Requires Docker running locally.)
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/
@@ -144,7 +148,7 @@ git commit -m "chore: scaffold Spring Boot backend with Testcontainers-backed in
 - Consumes: `AbstractIntegrationTest` (Task 1).
 - Produces: `Rol` enum `{DUENO, MESERO, CAJERO, CHEF}`; `Estacion` enum `{P1, P2}`; `Usuario` entity (`UUID id`, `String nombre`, `Rol rol`, `Estacion estacion` nullable, `String username` nullable, `String passwordHash` nullable, `String pinHash` nullable, `boolean activo`); `UsuarioRepository extends JpaRepository<Usuario, UUID>` with `Optional<Usuario> findByUsernameAndActivoTrue(String username)` and `List<Usuario> findByActivoTrueAndRolNot(Rol rol)`; `RegistroAsistencia` entity (`UUID id`, `Usuario usuario`, `Instant fechaHora`, `TipoAsistencia tipo`); `RegistroAsistenciaRepository extends JpaRepository<RegistroAsistencia, UUID>` with `long countByUsuarioId(UUID usuarioId)`. Also produces `TestUsuarios`, a test-only factory class with `static Usuario dueno(String username, String passwordHash, boolean activo)` and `static Usuario staff(String nombre, Rol rol, String pinHash, boolean activo)` (sets `estacion = Estacion.P1` automatically when `rol == CHEF`, else `null`) — every later task's tests build their fixtures through this, not ad hoc.
 
-- [ ] **Step 1: Write `V1__create_usuario.sql`**
+- [x] **Step 1: Write `V1__create_usuario.sql`**
 
 ```sql
 CREATE TABLE usuario (
@@ -159,7 +163,7 @@ CREATE TABLE usuario (
 );
 ```
 
-- [ ] **Step 2: Write `V2__create_registro_asistencia.sql`**
+- [x] **Step 2: Write `V2__create_registro_asistencia.sql`**
 
 ```sql
 CREATE TABLE registro_asistencia (
@@ -170,7 +174,7 @@ CREATE TABLE registro_asistencia (
 );
 ```
 
-- [ ] **Step 3: Write the failing persistence test**
+- [x] **Step 3: Write the failing persistence test**
 
 ```java
 class UsuarioPersistenceTest extends AbstractIntegrationTest {
@@ -201,21 +205,21 @@ class UsuarioPersistenceTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it fails**
+- [x] **Step 4: Run the test to verify it fails**
 
 Run: `cd backend && mvn -q test -Dtest=UsuarioPersistenceTest`
 Expected: FAIL (classes `Usuario`, `UsuarioRepository`, etc. don't exist yet).
 
-- [ ] **Step 5: Implement `Rol`, `Estacion`, `Usuario`, `UsuarioRepository`, `TipoAsistencia`, `RegistroAsistencia`, `RegistroAsistenciaRepository`, `TestUsuarios`**
+- [x] **Step 5: Implement `Rol`, `Estacion`, `Usuario`, `UsuarioRepository`, `TipoAsistencia`, `RegistroAsistencia`, `RegistroAsistenciaRepository`, `TestUsuarios`**
 
 `Usuario` and `RegistroAsistencia` are `@Entity` classes mapped with `@Enumerated(EnumType.STRING)` for every enum field, `@Id private UUID id = UUID.randomUUID();` (application-generated, no DB sequence). `RegistroAsistencia.usuario` is `@ManyToOne(fetch = LAZY)` with `@JoinColumn(name = "usuario_id")`. Use Lombok `@Getter @Setter` (or `@Data`) to avoid boilerplate. `TestUsuarios.dueno(...)` builds a `Usuario` with `rol = DUENO`, the given username/passwordHash/activo, `pinHash = null`, `estacion = null`. `TestUsuarios.staff(...)` builds a `Usuario` with the given rol/pinHash/activo, `username = null`, `passwordHash = null`, `estacion = (rol == CHEF ? Estacion.P1 : null)`. Neither helper calls `usuarioRepository.save(...)` — callers save when they need the id populated.
 
-- [ ] **Step 6: Run the test and verify it passes**
+- [x] **Step 6: Run the test and verify it passes**
 
 Run: `cd backend && mvn -q test -Dtest=UsuarioPersistenceTest`
 Expected: PASS — Flyway applies V1/V2 against the Testcontainers Postgres, all three assertions hold.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/main/resources/db/migration backend/src/main/java/com/posrestaurante/backend/usuario backend/src/main/java/com/posrestaurante/backend/asistencia backend/src/test/java/com/posrestaurante/backend/usuario backend/src/test/java/com/posrestaurante/backend/testsupport/TestUsuarios.java
@@ -228,6 +232,7 @@ git commit -m "feat: add Usuario and RegistroAsistencia schema, entities, and re
 
 **Files:**
 - Create: `backend/src/main/java/com/posrestaurante/backend/security/JwtService.java`
+- Create: `backend/src/main/java/com/posrestaurante/backend/security/SecurityConfig.java` (minimal version — see deviation note below)
 - Create: `backend/src/main/java/com/posrestaurante/backend/auth/dto/LoginRequest.java`
 - Create: `backend/src/main/java/com/posrestaurante/backend/auth/dto/AuthResponse.java`
 - Create: `backend/src/main/java/com/posrestaurante/backend/auth/AuthController.java`
@@ -239,7 +244,11 @@ git commit -m "feat: add Usuario and RegistroAsistencia schema, entities, and re
 - Consumes: `UsuarioRepository`, `Rol`, `TestUsuarios` (Task 2).
 - Produces: `PasswordEncoder` bean (`BCryptPasswordEncoder`, in a new `@Configuration` class `backend/src/main/java/com/posrestaurante/backend/security/PasswordEncoderConfig.java`); `JwtService` with `String generateToken(UUID usuarioId, String nombre, Rol rol)` and `Jws<Claims> parse(String token)` (throws `JwtException` on anything invalid/expired — callers catch this, nothing in `JwtService` swallows it); `LoginRequest(String username, String password)` record; `AuthResponse(String token, String nombre, Rol rol)` record; `POST /api/auth/login/dueno` — 200 + `AuthResponse` on success, 401 (empty body or generic `{"error":"credenciales invalidas"}`) on bad username, bad password, or `activo = false`. Also produces `V3__seed_dueno_dev.sql`, a Flyway migration that inserts exactly one dev dueño account (`username = 'admin'`) so the system is logeable end-to-end without a provisioning UI (none exists yet — the dueño-creates-staff flow is a later plan).
 
-- [ ] **Step 1: Write the failing controller test**
+**Deviation from the original plan:** this task also creates a *minimal* `SecurityConfig` (CSRF disabled, `/actuator/health` and `/api/auth/login/**` `permitAll()`, everything else `authenticated()`), even though Task 5 is where `SecurityConfig` was originally meant to appear. Without it, Spring Security's default autoconfiguration (CSRF protection + basic-auth-everything) returns `403` for every `POST`, including `/api/auth/login/dueno`, before the request ever reaches the controller — the test class can't get past step 2 without it. Task 4 extends the `permitAll()` list with `/api/auth/staff`; Task 5 replaces this file's body entirely with the stateless, JWT-aware version (and `addFilterBefore(jwtFilter, ...)`, and the custom 401 entry point) — at that point it stops being a `Create` and becomes a straightforward edit of an existing file.
+
+**Also note:** `V3__seed_dueno_dev.sql`'s seeded `username = 'admin'` is now live data in every test run against the shared Testcontainers Postgres (Task 1's fix made that container a true cross-class singleton). Any later test fixture that needs its own dueño account must pick a username other than `admin` — `UsuarioPersistenceTest.listsActiveNonDuenoStaffOnly` collided with it and was changed to use `otro-admin`.
+
+- [x] **Step 1: Write the failing controller test**
 
 ```java
 class DuenoAuthControllerTest extends AbstractIntegrationTest {
@@ -283,12 +292,12 @@ class DuenoAuthControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && mvn -q test -Dtest=DuenoAuthControllerTest`
 Expected: FAIL (404 — no `/api/auth/login/dueno` route yet).
 
-- [ ] **Step 3: Add `jwt.secret` and `jwt.expiration-minutes` to `application.yml`**
+- [x] **Step 3: Add `jwt.secret` and `jwt.expiration-minutes` to `application.yml`**
 
 ```yaml
 jwt:
@@ -296,15 +305,15 @@ jwt:
   expiration-minutes: 480
 ```
 
-- [ ] **Step 4: Implement `JwtService`**
+- [x] **Step 4: Implement `JwtService`**
 
 Use `Jwts.builder()` from JJWT 0.12.x, signing with HMAC-SHA256 from `jwt.secret` (read via `@Value`), embedding claims `usuarioId` (string UUID), `nombre`, `rol`; expiry = now + `jwt.expiration-minutes`. `parse(String token)` calls `Jwts.parser().verifyWith(key).build().parseSignedClaims(token)` and lets `JwtException`/`IllegalArgumentException` propagate.
 
-- [ ] **Step 5: Implement `PasswordEncoderConfig`, `LoginRequest`, `AuthResponse`, `AuthController.loginDueno`**
+- [x] **Step 5: Implement `PasswordEncoderConfig`, `LoginRequest`, `AuthResponse`, `AuthController.loginDueno`**
 
 `loginDueno` looks up `usuarioRepository.findByUsernameAndActivoTrue(request.username())`; if absent, or `passwordEncoder.matches(request.password(), usuario.getPasswordHash())` is false, return `401` via `ResponseStatusException` — same status and body shape for "not found" and "wrong password" so the two are indistinguishable to a caller. On success, call `jwtService.generateToken(...)` and return `200` with `AuthResponse`.
 
-- [ ] **Step 6: Write `V3__seed_dueno_dev.sql`**
+- [x] **Step 6: Write `V3__seed_dueno_dev.sql`**
 
 Pick a documented dev password (e.g. `cambiame123`), generate its BCrypt hash by running `new BCryptPasswordEncoder().encode("cambiame123")` from a scratch `main`/test (same encoder the app uses — a mismatched work factor or algorithm will make `seededDevDuenoCanLogIn` fail even with the right plaintext), then:
 
@@ -315,12 +324,12 @@ VALUES (gen_random_uuid(), 'Administrador', 'DUENO', 'admin', '<paste the genera
 
 If `gen_random_uuid()` is unavailable on the target Postgres, generate a literal UUID instead (e.g. with `uuidgen` or `UUID.randomUUID()`) and paste it directly — this row's id never needs to be looked up by the application, only its username.
 
-- [ ] **Step 7: Run the test and verify it passes**
+- [x] **Step 7: Run the test and verify it passes**
 
 Run: `cd backend && mvn -q test -Dtest=DuenoAuthControllerTest`
 Expected: PASS, all five cases including `seededDevDuenoCanLogIn`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/security backend/src/main/java/com/posrestaurante/backend/auth backend/src/main/resources/application.yml backend/src/main/resources/db/migration/V3__seed_dueno_dev.sql backend/src/test/java/com/posrestaurante/backend/auth
@@ -341,7 +350,7 @@ git commit -m "feat: add dueno username/password login issuing a JWT, seed dev d
 - Consumes: `UsuarioRepository`, `RegistroAsistenciaRepository`, `TestUsuarios` (Task 2), `JwtService`, `PasswordEncoder` (Task 3).
 - Produces: `PinLoginRequest(UUID usuarioId, String pin)` record; `StaffListItem(UUID id, String nombre, Rol rol)` record; `GET /api/auth/staff` — 200 + JSON array of `StaffListItem` for every `usuario` where `activo = true` and `rol != DUENO`; `POST /api/auth/login/pin` — 200 + `AuthResponse` on correct PIN for an active non-dueño usuario (and inserts one `RegistroAsistencia` row with `tipo = ENTRADA`), 401 on wrong PIN, unknown id, or `activo = false` (no `RegistroAsistencia` row inserted in any of these cases).
 
-- [ ] **Step 1: Write the failing controller test**
+- [x] **Step 1: Write the failing controller test**
 
 ```java
 class PinAuthControllerTest extends AbstractIntegrationTest {
@@ -389,21 +398,21 @@ class PinAuthControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && mvn -q test -Dtest=PinAuthControllerTest`
 Expected: FAIL (404s — routes don't exist).
 
-- [ ] **Step 3: Implement `PinLoginRequest`, `StaffListItem`, and the two `AuthController` endpoints**
+- [x] **Step 3: Implement `PinLoginRequest`, `StaffListItem`, and the two `AuthController` endpoints**
 
 `getStaff()` returns `usuarioRepository.findByActivoTrueAndRolNot(Rol.DUENO)` mapped to `StaffListItem`. `loginPin(request)` loads the `usuario` by id (404→401, same generic error as Task 3); if absent, inactive, or `!passwordEncoder.matches(request.pin(), usuario.getPinHash())`, return 401 **without** touching `registroAsistenciaRepository`. On success: save a new `RegistroAsistencia(usuario, Instant.now(), TipoAsistencia.ENTRADA)` *before* returning the token, then `jwtService.generateToken(...)`.
 
-- [ ] **Step 4: Run the test and verify it passes**
+- [x] **Step 4: Run the test and verify it passes**
 
 Run: `cd backend && mvn -q test -Dtest=PinAuthControllerTest`
 Expected: PASS, all five cases.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/auth backend/src/test/java/com/posrestaurante/backend/auth/PinAuthControllerTest.java
@@ -425,7 +434,7 @@ git commit -m "feat: add staff PIN login with attendance registration"
 - Consumes: `JwtService` (Task 3), `TestUsuarios` (Task 2).
 - Produces: `SecurityConfig` — a `SecurityFilterChain` bean that permits `POST /api/auth/login/**` and `GET /api/auth/staff` and `/actuator/health` without authentication, requires a valid JWT for every other path, is stateless (`SessionCreationPolicy.STATELESS`), and registers `authorities` as `ROLE_<rol>` (e.g. `ROLE_DUENO`) so later plans can use `hasRole("DUENO")`; `MeResponse(UUID usuarioId, String nombre, Rol rol)`; `GET /api/auth/me` — 200 + `MeResponse` for the caller identified by their token's claims, 401 if no token, a malformed token, or an expired token.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 class AuthMeControllerTest extends AbstractIntegrationTest {
@@ -463,16 +472,16 @@ class AuthMeControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && mvn -q test -Dtest=AuthMeControllerTest`
 Expected: FAIL (no route, and/or Spring Security's default config blocks everything with a login page redirect instead of a clean 401).
 
-- [ ] **Step 3: Implement `JwtAuthenticationFilter`**
+- [x] **Step 3: Implement `JwtAuthenticationFilter`**
 
 `extends OncePerRequestFilter`. Reads the `Authorization` header; if absent, calls `filterChain.doFilter` and lets `SecurityConfig` deny unauthenticated access downstream. If present, strips `Bearer `, calls `jwtService.parse(token)`; on success, builds a `UsernamePasswordAuthenticationToken` carrying the `usuarioId`/`nombre` as principal details and `List.of(new SimpleGrantedAuthority("ROLE_" + rol))` as authorities, sets it on `SecurityContextHolder`. On any `JwtException`/`IllegalArgumentException` from `parse`, do **not** set the context and let the request continue unauthenticated (so `SecurityConfig` returns 401, not the filter throwing a 500).
 
-- [ ] **Step 4: Implement `SecurityConfig`**
+- [x] **Step 4: Implement `SecurityConfig`**
 
 ```java
 @Bean
@@ -489,21 +498,21 @@ SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilt
 }
 ```
 
-- [ ] **Step 5: Implement `MeResponse` and `AuthController.me(Authentication authentication)`**
+- [x] **Step 5: Implement `MeResponse` and `AuthController.me(Authentication authentication)`**
 
 Read `usuarioId`/`nombre`/`rol` back out of the `Authentication` populated by the filter (e.g. from the principal details object the filter attached) and return a `MeResponse`. No repository lookup needed — everything required is already in the token's claims.
 
-- [ ] **Step 6: Run the test and verify it passes**
+- [x] **Step 6: Run the test and verify it passes**
 
 Run: `cd backend && mvn -q test -Dtest=AuthMeControllerTest`
 Expected: PASS, all four cases.
 
-- [ ] **Step 7: Run the full suite**
+- [x] **Step 7: Run the full suite**
 
 Run: `cd backend && mvn -q test`
 Expected: PASS — every test from Tasks 1–5 green together.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/security backend/src/main/java/com/posrestaurante/backend/auth backend/src/test/java/com/posrestaurante/backend/security
