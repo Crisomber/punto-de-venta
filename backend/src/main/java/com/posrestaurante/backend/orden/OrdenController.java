@@ -192,6 +192,19 @@ public class OrdenController {
         }
     }
 
+    @PostMapping("/{id}/cerrar")
+    public OrdenResponse cerrarOrden(@PathVariable UUID id) {
+        Orden orden = ordenRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (orden.getEstado() != EstadoOrden.ENVIADA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "solo se puede cerrar una orden enviada");
+        }
+        orden.setEstado(EstadoOrden.CERRADA);
+        orden.setFechaCierre(Instant.now());
+        ordenRepository.save(orden);
+        return toResponse(orden, obtenerItems(orden));
+    }
+
     private List<OrdenItemResponse> obtenerItems(Orden orden) {
         return ordenItemRepository.findByOrden(orden).stream().map(this::toItemResponse).toList();
     }

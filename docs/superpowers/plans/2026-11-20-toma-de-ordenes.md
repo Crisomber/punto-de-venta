@@ -978,7 +978,7 @@ git commit -m "feat: adding platillos to an already-sent orden immediately ticke
 - Consumes: nothing new.
 - Produces: `POST /api/ordenes/{id}/cerrar` — `200` + the updated `OrdenResponse` (`estado` now `CERRADA`, `fechaCierre` set) on success, `404` if `id` doesn't match any orden, `409` if the orden's `estado` isn't `ENVIADA`. **Does not touch `Mesa`** — see Global Constraints; a test here explicitly asserts the mesa is still `OCUPADA` afterward, since that's the one thing in this task someone might "fix" by reflex.
 
-- [ ] **Step 1: Write the failing controller test**
+- [x] **Step 1: Write the failing controller test**
 
 ```java
 class CerrarOrdenControllerTest extends AbstractIntegrationTest {
@@ -1057,12 +1057,12 @@ class CerrarOrdenControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=CerrarOrdenControllerTest`
 Expected: FAIL — every case 404s.
 
-- [ ] **Step 3: Implement `OrdenController.cerrarOrden`**
+- [x] **Step 3: Implement `OrdenController.cerrarOrden`**
 
 ```java
 @PostMapping("/{id}/cerrar")
@@ -1079,12 +1079,12 @@ public OrdenResponse cerrarOrden(@PathVariable UUID id) {
 }
 ```
 
-- [ ] **Step 4: Run the test and verify it passes**
+- [x] **Step 4: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=CerrarOrdenControllerTest`
 Expected: PASS, all 6 cases.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/orden/OrdenController.java backend/src/test/java/com/posrestaurante/backend/orden/CerrarOrdenControllerTest.java
