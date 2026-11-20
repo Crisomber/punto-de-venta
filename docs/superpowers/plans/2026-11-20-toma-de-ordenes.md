@@ -315,7 +315,7 @@ git commit -m "feat: mesero can open an orden on a mesa or para llevar"
 - Consumes: `Platillo`/`PlatilloRepository`, `Modificador` (menu-y-mesas); `Orden` (Task 1).
 - Produces: `EstadoOrdenItem {PENDIENTE, EN_PREPARACION, LISTO, ENTREGADO}` (this task only ever creates items as `PENDIENTE` — the rest belong to the future cocina plan); `OrdenItem(UUID id, Orden orden, Platillo platillo, int cantidad, BigDecimal precioUnitario, EstadoOrdenItem estado, Set<Modificador> modificadores)` — no `ticket` field yet; `Ticket` doesn't exist until Task 3, which adds that field (and its column) once it does. `modificadores` is `@ManyToMany` through a new `orden_item_modificador` join table, same shape as `Platillo.modificadores`; `OrdenItemRepository extends JpaRepository<OrdenItem, UUID>` with `List<OrdenItem> findByOrden(Orden orden)`; `AgregarItemsRequest(List<ItemRequest> items)` where `ItemRequest(UUID platilloId, Integer cantidad, Set<UUID> modificadorIds)`; `OrdenItemResponse(UUID id, UUID platilloId, String platilloNombre, int cantidad, BigDecimal precioUnitario, EstadoOrdenItem estado, Set<UUID> modificadorIds, Set<String> modificadorNombres)`. `POST /api/ordenes/{id}/items` — `200` + the updated `OrdenResponse` (now with non-empty `items`) on success, `404` if `id` doesn't match any orden, `409` if the orden's `estado` isn't `ABIERTA` (the `ENVIADA` case is Task 4), `400` if `items` is empty/missing, if any `cantidad` isn't `>= 1`, if any `platilloId` doesn't match an **active** `Platillo`, or if any `modificadorId` isn't in *that platillo's* allowed set.
 
-- [ ] **Step 1: Write the failing controller test**
+- [x] **Step 1: Write the failing controller test**
 
 ```java
 class AgregarItemsControllerTest extends AbstractIntegrationTest {
@@ -442,12 +442,12 @@ class AgregarItemsControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=AgregarItemsControllerTest`
 Expected: FAIL — every case 404s.
 
-- [ ] **Step 3: Write `V10__create_orden_item.sql` and `V11__create_orden_item_modificador.sql`**
+- [x] **Step 3: Write `V10__create_orden_item.sql` and `V11__create_orden_item_modificador.sql`**
 
 ```sql
 -- V10__create_orden_item.sql
@@ -473,7 +473,7 @@ CREATE TABLE orden_item_modificador (
 );
 ```
 
-- [ ] **Step 4: Implement `EstadoOrdenItem`, `OrdenItem`, `OrdenItemRepository`, `AgregarItemsRequest`, `OrdenItemResponse`, `OrdenController.agregarItems`**
+- [x] **Step 4: Implement `EstadoOrdenItem`, `OrdenItem`, `OrdenItemRepository`, `AgregarItemsRequest`, `OrdenItemResponse`, `OrdenController.agregarItems`**
 
 ```java
 @Entity
@@ -575,17 +575,17 @@ private OrdenItemResponse toItemResponse(OrdenItem item) {
 
 Also update `abrirOrden`'s call to `toResponse(orden, List.of())` — leave it as-is; `List.of()` is correct there since a just-opened orden has no items yet.
 
-- [ ] **Step 5: Run the test and verify it passes**
+- [x] **Step 5: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=AgregarItemsControllerTest`
 Expected: PASS, all 8 cases.
 
-- [ ] **Step 6: Run the full suite**
+- [x] **Step 6: Run the full suite**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test`
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/main/resources/db/migration/V10__create_orden_item.sql backend/src/main/resources/db/migration/V11__create_orden_item_modificador.sql backend/src/main/java/com/posrestaurante/backend/orden backend/src/test/java/com/posrestaurante/backend/orden/AgregarItemsControllerTest.java

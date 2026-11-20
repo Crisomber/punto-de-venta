@@ -3,15 +3,21 @@ package com.posrestaurante.backend.orden;
 import com.posrestaurante.backend.mesa.EstadoMesa;
 import com.posrestaurante.backend.mesa.Mesa;
 import com.posrestaurante.backend.mesa.MesaRepository;
+import com.posrestaurante.backend.modificador.Modificador;
 import com.posrestaurante.backend.orden.dto.AbrirOrdenRequest;
+import com.posrestaurante.backend.orden.dto.AgregarItemsRequest;
+import com.posrestaurante.backend.orden.dto.AgregarItemsRequest.ItemRequest;
 import com.posrestaurante.backend.orden.dto.OrdenItemResponse;
 import com.posrestaurante.backend.orden.dto.OrdenResponse;
+import com.posrestaurante.backend.platillo.Platillo;
+import com.posrestaurante.backend.platillo.PlatilloRepository;
 import com.posrestaurante.backend.security.AuthenticatedUser;
 import com.posrestaurante.backend.usuario.Usuario;
 import com.posrestaurante.backend.usuario.UsuarioRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +27,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/ordenes")
@@ -28,14 +37,19 @@ import java.util.List;
 public class OrdenController {
 
     private final OrdenRepository ordenRepository;
+    private final OrdenItemRepository ordenItemRepository;
     private final MesaRepository mesaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final PlatilloRepository platilloRepository;
 
-    public OrdenController(OrdenRepository ordenRepository, MesaRepository mesaRepository,
-                            UsuarioRepository usuarioRepository) {
+    public OrdenController(OrdenRepository ordenRepository, OrdenItemRepository ordenItemRepository,
+                            MesaRepository mesaRepository, UsuarioRepository usuarioRepository,
+                            PlatilloRepository platilloRepository) {
         this.ordenRepository = ordenRepository;
+        this.ordenItemRepository = ordenItemRepository;
         this.mesaRepository = mesaRepository;
         this.usuarioRepository = usuarioRepository;
+        this.platilloRepository = platilloRepository;
     }
 
     @PostMapping
@@ -78,6 +92,65 @@ public class OrdenController {
         }
 
         return toResponse(orden, List.of());
+    }
+
+    @PostMapping("/{id}/items")
+    public OrdenResponse agregarItems(@PathVariable UUID id, @RequestBody AgregarItemsRequest request) {
+        Orden orden = ordenRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (orden.getEstado() != EstadoOrden.ABIERTA) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "la orden no acepta mas platillos en su estado actual");
+        }
+        if (request.items() == null || request.items().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "items requeridos");
+        }
+
+        for (ItemRequest itemRequest : request.items()) {
+            crearOrdenItem(orden, itemRequest);
+        }
+
+        return toResponse(orden, obtenerItems(orden));
+    }
+
+    private OrdenItem crearOrdenItem(Orden orden, ItemRequest itemRequest) {
+        if (itemRequest.cantidad() == null || itemRequest.cantidad() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "cantidad invalida");
+        }
+        Platillo platillo = platilloRepository.findById(itemRequest.platilloId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "platillo invalido"));
+        if (!platillo.isActivo()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "platillo no disponible");
+        }
+
+        Set<UUID> modificadorIds = itemRequest.modificadorIds() == null ? Set.of() : itemRequest.modificadorIds();
+        Set<UUID> permitidos = platillo.getModificadores().stream()
+                .map(Modificador::getId).collect(Collectors.toSet());
+        if (!permitidos.containsAll(modificadorIds)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "modificador no disponible para este platillo");
+        }
+        Set<Modificador> modificadores = platillo.getModificadores().stream()
+                .filter(m -> modificadorIds.contains(m.getId()))
+                .collect(Collectors.toSet());
+
+        OrdenItem item = new OrdenItem();
+        item.setOrden(orden);
+        item.setPlatillo(platillo);
+        item.setCantidad(itemRequest.cantidad());
+        item.setPrecioUnitario(platillo.getPrecio());
+        item.setEstado(EstadoOrdenItem.PENDIENTE);
+        item.setModificadores(modificadores);
+        return ordenItemRepository.save(item);
+    }
+
+    private List<OrdenItemResponse> obtenerItems(Orden orden) {
+        return ordenItemRepository.findByOrden(orden).stream().map(this::toItemResponse).toList();
+    }
+
+    private OrdenItemResponse toItemResponse(OrdenItem item) {
+        Set<UUID> modIds = item.getModificadores().stream().map(Modificador::getId).collect(Collectors.toSet());
+        Set<String> modNombres = item.getModificadores().stream().map(Modificador::getNombre).collect(Collectors.toSet());
+        return new OrdenItemResponse(item.getId(), item.getPlatillo().getId(), item.getPlatillo().getNombre(),
+                item.getCantidad(), item.getPrecioUnitario(), item.getEstado(), modIds, modNombres);
     }
 
     private OrdenResponse toResponse(Orden orden, List<OrdenItemResponse> items) {
