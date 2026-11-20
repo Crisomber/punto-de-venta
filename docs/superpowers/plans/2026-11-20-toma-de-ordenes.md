@@ -1103,7 +1103,7 @@ git commit -m "feat: mesero can cerrar an orden, handing it off to caja"
 - Consumes: nothing new.
 - Produces: `GET /api/ordenes` — `200` + `List<OrdenResponse>` of every orden regardless of `estado`, items nested, any authenticated role (already permitted by Task 1's `SecurityConfig` rule — no `SecurityConfig` change needed here); `GET /api/ordenes/{id}` — `200` + one `OrdenResponse` with full item/modificador detail, `404` if unknown.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 class ListarOrdenesControllerTest extends AbstractIntegrationTest {
@@ -1185,12 +1185,12 @@ class ListarOrdenesControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=ListarOrdenesControllerTest`
 Expected: FAIL (404 — no `GET` routes yet).
 
-- [ ] **Step 3: Implement `OrdenController.listarOrdenes` and `obtenerOrden`**
+- [x] **Step 3: Implement `OrdenController.listarOrdenes` and `obtenerOrden`**
 
 ```java
 @GetMapping
@@ -1208,17 +1208,17 @@ public OrdenResponse obtenerOrden(@PathVariable UUID id) {
 }
 ```
 
-- [ ] **Step 4: Run the test and verify it passes**
+- [x] **Step 4: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=ListarOrdenesControllerTest`
 Expected: PASS, all 4 cases.
 
-- [ ] **Step 5: Run the full suite**
+- [x] **Step 5: Run the full suite**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test`
 Expected: PASS — every test from this plan and every prior plan, together.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/orden/OrdenController.java backend/src/test/java/com/posrestaurante/backend/orden/ListarOrdenesControllerTest.java

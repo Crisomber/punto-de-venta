@@ -21,6 +21,7 @@ import com.posrestaurante.backend.usuario.UsuarioRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -190,6 +191,20 @@ public class OrdenController {
             item.setTicket(ticket);
             ordenItemRepository.save(item);
         }
+    }
+
+    @GetMapping
+    public List<OrdenResponse> listarOrdenes() {
+        return ordenRepository.findAll().stream()
+                .map(orden -> toResponse(orden, obtenerItems(orden)))
+                .toList();
+    }
+
+    @GetMapping("/{id}")
+    public OrdenResponse obtenerOrden(@PathVariable UUID id) {
+        Orden orden = ordenRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return toResponse(orden, obtenerItems(orden));
     }
 
     @PostMapping("/{id}/cerrar")
