@@ -236,7 +236,7 @@ git commit -m "feat: dueno can create, list, and delete mesas"
 - Consumes: `JwtService`, `Rol`.
 - Produces (identical shape, twice — once per entity): `Categoria(UUID id, String nombre)` / `Modificador(UUID id, String nombre)`; `*Repository extends JpaRepository<X, UUID>` (no custom queries needed — `Platillo`, built in Task 3, is what looks these up by id); `Crear*Request(String nombre)`; `*Response(UUID id, String nombre)`; `POST /api/categorias` / `POST /api/modificadores` — `201` + response on success, `400` if `nombre` is blank; `GET /api/categorias` / `GET /api/modificadores` — `200` + list, any authenticated role. Adds, before `.anyRequest().authenticated()`: `.requestMatchers(HttpMethod.GET, "/api/categorias/**", "/api/modificadores/**").authenticated()` then `.requestMatchers("/api/categorias/**", "/api/modificadores/**").hasRole("DUENO")`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```java
 class CategoriaControllerTest extends AbstractIntegrationTest {
@@ -282,12 +282,12 @@ class CategoriaControllerTest extends AbstractIntegrationTest {
 
 `ModificadorControllerTest` mirrors this exactly against `/api/modificadores`.
 
-- [ ] **Step 2: Run both test classes to verify they fail**
+- [x] **Step 2: Run both test classes to verify they fail**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=CategoriaControllerTest,ModificadorControllerTest`
 Expected: FAIL — every case 404s.
 
-- [ ] **Step 3: Write `V5__create_categoria.sql` and `V6__create_modificador.sql`**
+- [x] **Step 3: Write `V5__create_categoria.sql` and `V6__create_modificador.sql`**
 
 ```sql
 -- V5__create_categoria.sql
@@ -305,7 +305,7 @@ CREATE TABLE modificador (
 );
 ```
 
-- [ ] **Step 4: Add the `SecurityConfig` rules**
+- [x] **Step 4: Add the `SecurityConfig` rules**
 
 ```java
 .requestMatchers(HttpMethod.GET, "/api/categorias/**", "/api/modificadores/**").authenticated()
@@ -314,7 +314,7 @@ CREATE TABLE modificador (
 
 (placed with the other specific rules, before `.anyRequest().authenticated()`)
 
-- [ ] **Step 5: Implement `Categoria`/`CategoriaRepository`/DTOs/`CategoriaController` and `Modificador`/`ModificadorRepository`/DTOs/`ModificadorController`**
+- [x] **Step 5: Implement `Categoria`/`CategoriaRepository`/DTOs/`CategoriaController` and `Modificador`/`ModificadorRepository`/DTOs/`ModificadorController`**
 
 ```java
 @Entity
@@ -364,17 +364,17 @@ public class CategoriaController {
 
 `Modificador`/`ModificadorRepository`/`ModificadorController` are the same shape against `/api/modificadores`.
 
-- [ ] **Step 6: Run both test classes and verify they pass**
+- [x] **Step 6: Run both test classes and verify they pass**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=CategoriaControllerTest,ModificadorControllerTest`
 Expected: PASS, all 10 cases (5 + 5).
 
-- [ ] **Step 7: Run the full suite**
+- [x] **Step 7: Run the full suite**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test`
 Expected: PASS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/src/main/resources/db/migration/V5__create_categoria.sql backend/src/main/resources/db/migration/V6__create_modificador.sql backend/src/main/java/com/posrestaurante/backend/categoria backend/src/main/java/com/posrestaurante/backend/modificador backend/src/main/java/com/posrestaurante/backend/security/SecurityConfig.java backend/src/test/java/com/posrestaurante/backend/categoria backend/src/test/java/com/posrestaurante/backend/modificador

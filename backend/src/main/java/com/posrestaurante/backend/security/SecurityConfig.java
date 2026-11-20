@@ -21,6 +21,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/usuarios/**").hasRole("DUENO")
                         .requestMatchers(HttpMethod.GET, "/api/mesas/**").authenticated()
                         .requestMatchers("/api/mesas/**").hasRole("DUENO")
+                        .requestMatchers(HttpMethod.GET, "/api/categorias/**", "/api/modificadores/**").authenticated()
+                        .requestMatchers("/api/categorias/**", "/api/modificadores/**").hasRole("DUENO")
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint(
                         (req, res, ex) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
