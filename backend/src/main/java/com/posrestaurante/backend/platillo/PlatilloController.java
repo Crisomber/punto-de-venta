@@ -4,10 +4,13 @@ import com.posrestaurante.backend.categoria.Categoria;
 import com.posrestaurante.backend.categoria.CategoriaRepository;
 import com.posrestaurante.backend.modificador.Modificador;
 import com.posrestaurante.backend.modificador.ModificadorRepository;
+import com.posrestaurante.backend.platillo.dto.ActivarPlatilloRequest;
 import com.posrestaurante.backend.platillo.dto.CrearPlatilloRequest;
 import com.posrestaurante.backend.platillo.dto.PlatilloResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -80,6 +83,19 @@ public class PlatilloController {
         return platilloRepository.findAll().stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @PatchMapping("/{id}/activo")
+    public PlatilloResponse cambiarActivo(@PathVariable UUID id, @RequestBody ActivarPlatilloRequest request) {
+        if (request.activo() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "activo es requerido");
+        }
+        Platillo platillo = platilloRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        platillo.setActivo(request.activo());
+        platilloRepository.save(platillo);
+        return toResponse(platillo);
     }
 
     private PlatilloResponse toResponse(Platillo platillo) {

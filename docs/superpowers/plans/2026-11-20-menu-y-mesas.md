@@ -728,7 +728,7 @@ git commit -m "feat: any authenticated role can list platillos"
 - Consumes: `PlatilloController.toResponse` (Task 3).
 - Produces: `ActivarPlatilloRequest(Boolean activo)`; `PATCH /api/platillos/{id}/activo` — `200` + `PlatilloResponse` on success, `400` if `activo` is missing, `404` if `id` doesn't match any platillo, `403` for a non-`DUENO` token, `401` with no token.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```java
 class ActivarPlatilloControllerTest extends AbstractIntegrationTest {
@@ -794,12 +794,12 @@ class ActivarPlatilloControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=ActivarPlatilloControllerTest`
 Expected: FAIL (404 — no `PATCH .../activo` route yet).
 
-- [ ] **Step 3: Implement `ActivarPlatilloRequest` and `PlatilloController.cambiarActivo`**
+- [x] **Step 3: Implement `ActivarPlatilloRequest` and `PlatilloController.cambiarActivo`**
 
 ```java
 @PatchMapping("/{id}/activo")
@@ -816,12 +816,12 @@ public PlatilloResponse cambiarActivo(@PathVariable UUID id, @RequestBody Activa
 }
 ```
 
-- [ ] **Step 4: Run the test and verify it passes**
+- [x] **Step 4: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=ActivarPlatilloControllerTest`
 Expected: PASS, all 6 cases.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/main/java/com/posrestaurante/backend/platillo backend/src/test/java/com/posrestaurante/backend/platillo/ActivarPlatilloControllerTest.java
