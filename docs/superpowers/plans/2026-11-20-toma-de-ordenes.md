@@ -22,6 +22,7 @@
 - **`OrdenItem.precioUnitario` is a snapshot of `Platillo.precio` taken when the item is added**, not a live join. A later price change on the platillo must never retroactively change what an existing order charges.
 - **Only an `activo` platillo can be added to an order.** This is the filtered read the menu-y-mesas plan's Non-Goals deferred to "whichever plan actually needs it" — this is that plan.
 - **A requested `modificadorId` must be in *that specific platillo's* allowed set** (`Platillo.modificadores`, from menu-y-mesas), not just any existing `Modificador` row. Checking existence alone isn't enough.
+- **`abrirOrden` is the only endpoint in this plan that resolves the caller's own `Usuario` row** (to set `Orden.mesero`, a `NOT NULL` FK). Every other mutating endpoint (`items`, `enviar`, `cerrar`) only cares about the caller's *role* (enforced by `SecurityConfig`, never re-checked in the controller body) and never looks the caller up by id. So `AbrirOrdenControllerTest`'s success-path tests need a token minted for a `Usuario` actually saved in the test (`meseroToken()`, not the bare `tokenFor(Rol.MESERO)` every other test file in this plan uses) — a token for a random, never-persisted id would 401 there even though the request is otherwise perfectly valid, since `usuarioRepository.findById(...)` would find nothing.
 - **The ticket-grouping rule is one rule, used twice, not two rules.** "Group the affected items by `estacion`, one `Ticket` per represented `estacion`" is exactly what happens on the first `enviar` (Task 3) and on every item added afterward (Task 4) — implemented as one shared private method so the two call sites can't drift apart.
 
 ## Review Focus
@@ -54,17 +55,27 @@
 - Consumes: `Mesa`/`MesaRepository`/`EstadoMesa` (menu-y-mesas); `Usuario`/`UsuarioRepository`, `AuthenticatedUser`, `JwtService` (backend-fundamentos).
 - Produces: `TipoOrden {CONSUMO_LOCAL, PARA_LLEVAR}`; `EstadoOrden {ABIERTA, ENVIADA, CERRADA, PAGADA}` (the full spec enum, even though this plan only ever sets the first two — `PAGADA` exists in the DB `CHECK` from day one so a future Caja plan needs no migration just to widen it); `Orden(UUID id, Mesa mesa /* nullable */, Usuario mesero, TipoOrden tipo, EstadoOrden estado, Instant fechaApertura, Instant fechaCierre /* nullable */)`; `OrdenRepository extends JpaRepository<Orden, UUID>`; `AbrirOrdenRequest(TipoOrden tipo, UUID mesaId)`; `OrdenResponse(UUID id, Integer mesaNumero, UUID meseroId, String meseroNombre, TipoOrden tipo, EstadoOrden estado, Instant fechaApertura, Instant fechaCierre, List<OrdenItemResponse> items)` — `items` is always `[]` for this task (Task 2 is what populates it; the shape is defined now so later tasks don't need to touch the response record). `POST /api/ordenes` — `201` + `OrdenResponse` on success; `400` if `tipo` is missing, if `CONSUMO_LOCAL` and `mesaId` is missing or doesn't match a `Mesa`, or if `PARA_LLEVAR` and `mesaId` is present; `409` if the referenced mesa is already `OCUPADA`; `403` for a non-`MESERO` token; `401` with no token. Adds, before `.anyRequest().authenticated()`: `.requestMatchers(HttpMethod.GET, "/api/ordenes/**").authenticated()` then `.requestMatchers("/api/ordenes/**").hasRole("MESERO")` — this pair covers every endpoint Tasks 2–6 add too (Task 6's `GET`s included).
 
-- [ ] **Step 1: Write the failing controller test**
+- [x] **Step 1: Write the failing controller test**
 
 ```java
 class AbrirOrdenControllerTest extends AbstractIntegrationTest {
 
     @Autowired OrdenRepository ordenRepository;
     @Autowired MesaRepository mesaRepository;
+    @Autowired UsuarioRepository usuarioRepository;
     @Autowired JwtService jwtService;
 
     private String tokenFor(Rol rol) {
         return jwtService.generateToken(UUID.randomUUID(), "Alguien", rol);
+    }
+
+    // Unlike tokenFor, this persists a real Usuario first: abrirOrden looks the
+    // caller up by usuarioId to set Orden.mesero (a NOT NULL FK), so a token for
+    // an id that was never saved would 401 even on an otherwise-valid request.
+    private String meseroToken() {
+        Usuario mesero = TestUsuarios.staff("Luis", Rol.MESERO, "hash", true);
+        usuarioRepository.save(mesero);
+        return jwtService.generateToken(mesero.getId(), "Luis", Rol.MESERO);
     }
 
     private Mesa unaMesaLibre(int numero) {
@@ -79,7 +90,7 @@ class AbrirOrdenControllerTest extends AbstractIntegrationTest {
         Mesa mesa = unaMesaLibre(5);
 
         mockMvc.perform(post("/api/ordenes")
-                        .header("Authorization", "Bearer " + tokenFor(Rol.MESERO))
+                        .header("Authorization", "Bearer " + meseroToken())
                         .contentType(APPLICATION_JSON)
                         .content("{\"tipo\":\"CONSUMO_LOCAL\",\"mesaId\":\"" + mesa.getId() + "\"}"))
                 .andExpect(status().isCreated())
@@ -94,7 +105,7 @@ class AbrirOrdenControllerTest extends AbstractIntegrationTest {
     @Test
     void meseroOpensParaLlevarOrderWithoutMesa() throws Exception {
         mockMvc.perform(post("/api/ordenes")
-                        .header("Authorization", "Bearer " + tokenFor(Rol.MESERO))
+                        .header("Authorization", "Bearer " + meseroToken())
                         .contentType(APPLICATION_JSON)
                         .content("{\"tipo\":\"PARA_LLEVAR\"}"))
                 .andExpect(status().isCreated())
@@ -118,7 +129,7 @@ class AbrirOrdenControllerTest extends AbstractIntegrationTest {
         mesaRepository.save(mesa);
 
         mockMvc.perform(post("/api/ordenes")
-                        .header("Authorization", "Bearer " + tokenFor(Rol.MESERO))
+                        .header("Authorization", "Bearer " + meseroToken())
                         .contentType(APPLICATION_JSON)
                         .content("{\"tipo\":\"CONSUMO_LOCAL\",\"mesaId\":\"" + mesa.getId() + "\"}"))
                 .andExpect(status().isConflict());
@@ -141,12 +152,12 @@ class AbrirOrdenControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=AbrirOrdenControllerTest`
 Expected: FAIL — every case 404s (no route yet).
 
-- [ ] **Step 3: Write `V9__create_orden.sql`**
+- [x] **Step 3: Write `V9__create_orden.sql`**
 
 ```sql
 CREATE TABLE orden (
@@ -160,14 +171,14 @@ CREATE TABLE orden (
 );
 ```
 
-- [ ] **Step 4: Add the `SecurityConfig` rules**
+- [x] **Step 4: Add the `SecurityConfig` rules**
 
 ```java
 .requestMatchers(HttpMethod.GET, "/api/ordenes/**").authenticated()
 .requestMatchers("/api/ordenes/**").hasRole("MESERO")
 ```
 
-- [ ] **Step 5: Implement `TipoOrden`, `EstadoOrden`, `Orden`, `OrdenRepository`, `AbrirOrdenRequest`, `OrdenResponse` (with its nested `OrdenItemResponse`, defined now but unused until Task 2), `OrdenController.abrirOrden`**
+- [x] **Step 5: Implement `TipoOrden`, `EstadoOrden`, `Orden`, `OrdenRepository`, `AbrirOrdenRequest`, `OrdenResponse` (with its nested `OrdenItemResponse`, defined now but unused until Task 2), `OrdenController.abrirOrden`**
 
 ```java
 @Entity
@@ -268,17 +279,17 @@ public class OrdenController {
 }
 ```
 
-- [ ] **Step 6: Run the test and verify it passes**
+- [x] **Step 6: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=AbrirOrdenControllerTest`
 Expected: PASS, all 8 cases.
 
-- [ ] **Step 7: Run the full suite**
+- [x] **Step 7: Run the full suite**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test`
 Expected: PASS — this task's tests plus every test from every prior plan, together.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/src/main/resources/db/migration/V9__create_orden.sql backend/src/main/java/com/posrestaurante/backend/orden backend/src/main/java/com/posrestaurante/backend/security/SecurityConfig.java backend/src/test/java/com/posrestaurante/backend/orden
