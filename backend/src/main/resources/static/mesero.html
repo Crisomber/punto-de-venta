@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Punto de Venta — Mesero</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<div class="tarjeta">
+    <p class="etiqueta-rol">Mesero</p>
+    <h1 class="bienvenida" id="bienvenida"></h1>
+    <button class="boton-salir" id="btn-salir">Cerrar sesión</button>
+</div>
+<script src="js/api.js"></script>
+<script>
+    const sesion = requerirSesion('MESERO');
+    if (sesion) {
+        document.getElementById('bienvenida').textContent = 'Bienvenido, ' + sesion.nombre;
+    }
+    document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
+</script>
+</body>
+</html>

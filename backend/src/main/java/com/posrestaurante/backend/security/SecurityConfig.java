@@ -17,7 +17,8 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health", "/api/auth/login/**", "/api/auth/staff").permitAll()
+                        .requestMatchers("/actuator/health", "/api/auth/login/**", "/api/auth/staff",
+                                "/", "/*.html", "/css/**", "/js/**").permitAll()
                         .requestMatchers("/api/usuarios/**").hasRole("DUENO")
                         .requestMatchers(HttpMethod.GET, "/api/mesas/**").authenticated()
                         .requestMatchers("/api/mesas/**").hasRole("DUENO")
