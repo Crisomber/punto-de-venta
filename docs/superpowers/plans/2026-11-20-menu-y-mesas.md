@@ -400,7 +400,7 @@ git commit -m "feat: dueno can create and list categorias and modificadores"
 - Consumes: `Categoria`/`CategoriaRepository`, `Modificador`/`ModificadorRepository` (Task 2); `com.posrestaurante.backend.usuario.Estacion` (backend-fundamentos).
 - Produces: `Platillo(UUID id, String nombre, String descripcion, BigDecimal precio, Categoria categoria, Estacion estacion, Set<Modificador> modificadores, boolean activo)` — `categoria` is `@ManyToOne`, `modificadores` is `@ManyToMany` through the `platillo_modificador` join table; `PlatilloRepository extends JpaRepository<Platillo, UUID>`; `CrearPlatilloRequest(String nombre, String descripcion, BigDecimal precio, UUID categoriaId, Estacion estacion, Set<UUID> modificadorIds)`; `PlatilloResponse(UUID id, String nombre, String descripcion, BigDecimal precio, UUID categoriaId, String categoriaNombre, Estacion estacion, Set<UUID> modificadorIds, boolean activo)` (flat ids for `modificadorIds`, not nested objects — and `categoriaNombre` inlined so a client never needs a second round trip just to show it); `POST /api/platillos` — `201` + `PlatilloResponse` on success, `400` if `nombre` is blank, `precio` is missing or `<= 0`, `estacion` is missing, `categoriaId` is missing or doesn't match a `Categoria`, or any id in `modificadorIds` doesn't match a `Modificador`. Adds, before `.anyRequest().authenticated()`: `.requestMatchers(HttpMethod.GET, "/api/platillos/**").authenticated()` then `.requestMatchers("/api/platillos/**").hasRole("DUENO")` — this one rule pair also covers Tasks 4–6.
 
-- [ ] **Step 1: Write the failing controller test**
+- [x] **Step 1: Write the failing controller test**
 
 ```java
 class CrearPlatilloControllerTest extends AbstractIntegrationTest {
@@ -475,12 +475,12 @@ class CrearPlatilloControllerTest extends AbstractIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=CrearPlatilloControllerTest`
 Expected: FAIL — every case 404s.
 
-- [ ] **Step 3: Write `V7__create_platillo.sql` and `V8__create_platillo_modificador.sql`**
+- [x] **Step 3: Write `V7__create_platillo.sql` and `V8__create_platillo_modificador.sql`**
 
 ```sql
 -- V7__create_platillo.sql
@@ -504,14 +504,14 @@ CREATE TABLE platillo_modificador (
 );
 ```
 
-- [ ] **Step 4: Add the `SecurityConfig` rules**
+- [x] **Step 4: Add the `SecurityConfig` rules**
 
 ```java
 .requestMatchers(HttpMethod.GET, "/api/platillos/**").authenticated()
 .requestMatchers("/api/platillos/**").hasRole("DUENO")
 ```
 
-- [ ] **Step 5: Implement `Platillo`, `PlatilloRepository`, `CrearPlatilloRequest`, `PlatilloResponse`, `PlatilloController.crearPlatillo`**
+- [x] **Step 5: Implement `Platillo`, `PlatilloRepository`, `CrearPlatilloRequest`, `PlatilloResponse`, `PlatilloController.crearPlatillo`**
 
 ```java
 @Entity
@@ -610,17 +610,17 @@ public class PlatilloController {
 }
 ```
 
-- [ ] **Step 6: Run the test and verify it passes**
+- [x] **Step 6: Run the test and verify it passes**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test -Dtest=CrearPlatilloControllerTest`
 Expected: PASS, all 8 cases.
 
-- [ ] **Step 7: Run the full suite**
+- [x] **Step 7: Run the full suite**
 
 Run: `cd backend && JWT_SECRET=<any value> mvn -q test`
 Expected: PASS.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/src/main/resources/db/migration/V7__create_platillo.sql backend/src/main/resources/db/migration/V8__create_platillo_modificador.sql backend/src/main/java/com/posrestaurante/backend/platillo backend/src/main/java/com/posrestaurante/backend/security/SecurityConfig.java backend/src/test/java/com/posrestaurante/backend/platillo/CrearPlatilloControllerTest.java
