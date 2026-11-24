@@ -23,6 +23,7 @@ async function iniciar() {
     document.getElementById('btn-cancelar-edicion').addEventListener('click', cancelarEdicionPlatillo);
     document.getElementById('usuario-rol').addEventListener('change', actualizarVisibilidadEstacion);
     document.getElementById('form-usuario').addEventListener('submit', crearUsuario);
+    document.getElementById('form-password').addEventListener('submit', cambiarPassword);
     document.getElementById('btn-consultar-reporte').addEventListener('click', consultarReporte);
 
     actualizarVisibilidadEstacion();
@@ -355,6 +356,24 @@ async function crearUsuario(evento) {
 async function cambiarActivoUsuario(usuario) {
     await apiPatchAuth('/api/usuarios/' + usuario.id + '/activo', { activo: !usuario.activo });
     await cargarUsuarios();
+}
+
+async function cambiarPassword(evento) {
+    evento.preventDefault();
+    const error = document.getElementById('error-password');
+    const exito = document.getElementById('exito-password');
+    error.textContent = '';
+    exito.textContent = '';
+    try {
+        await apiPatchAuth('/api/auth/password', {
+            passwordActual: document.getElementById('password-actual').value,
+            passwordNueva: document.getElementById('password-nueva').value,
+        }, { cerrarSesionSi401: false });
+        document.getElementById('form-password').reset();
+        exito.textContent = 'Contraseña actualizada.';
+    } catch (e) {
+        error.textContent = e.message;
+    }
 }
 
 // ---------- Reportes ----------

@@ -36,20 +36,25 @@ function requerirSesion(rolEsperado) {
 }
 
 // Peticion autenticada generica: adjunta el Authorization de la sesion actual.
-// Si la API responde 401 (token vencido o invalido), limpia la sesion y manda
-// a index.html en vez de dejar la pantalla en un estado roto.
-async function apiFetch(metodo, ruta, cuerpo) {
+// Si la API responde 401, normalmente es el token vencido o invalido, y lo
+// correcto es limpiar la sesion y mandar a index.html en vez de dejar la
+// pantalla en un estado roto. La excepcion es un endpoint donde un 401
+// significa otra cosa de negocio (ej. "contrasena actual incorrecta", igual
+// que un login fallido) — para esos, pasar {cerrarSesionSi401: false} y
+// manejar el error como cualquier otro.
+async function apiFetch(metodo, ruta, cuerpo, opciones = {}) {
+    const cerrarSesionSi401 = opciones.cerrarSesionSi401 !== false;
     const sesion = obtenerSesion();
-    const opciones = { method: metodo, headers: {} };
+    const fetchOpciones = { method: metodo, headers: {} };
     if (sesion) {
-        opciones.headers['Authorization'] = 'Bearer ' + sesion.token;
+        fetchOpciones.headers['Authorization'] = 'Bearer ' + sesion.token;
     }
     if (cuerpo !== undefined) {
-        opciones.headers['Content-Type'] = 'application/json';
-        opciones.body = JSON.stringify(cuerpo);
+        fetchOpciones.headers['Content-Type'] = 'application/json';
+        fetchOpciones.body = JSON.stringify(cuerpo);
     }
-    const respuesta = await fetch(ruta, opciones);
-    if (respuesta.status === 401) {
+    const respuesta = await fetch(ruta, fetchOpciones);
+    if (respuesta.status === 401 && cerrarSesionSi401) {
         cerrarSesion();
         throw new Error('sesion expirada');
     }
@@ -76,8 +81,8 @@ function apiPostAuth(ruta, cuerpo) {
     return apiFetch('POST', ruta, cuerpo ?? {});
 }
 
-function apiPatchAuth(ruta, cuerpo) {
-    return apiFetch('PATCH', ruta, cuerpo ?? {});
+function apiPatchAuth(ruta, cuerpo, opciones) {
+    return apiFetch('PATCH', ruta, cuerpo ?? {}, opciones);
 }
 
 function apiDeleteAuth(ruta) {
