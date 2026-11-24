@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #f3f4f6;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.tarjeta {
+    width: 100%;
+    max-width: 380px;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 8px 24px rgba(0, 0, 0, .06);
+    text-align: center;
+}
+
+.tarjeta h1 {
+    margin: 0 0 24px;
+    font-size: 22px;
+    font-weight: 600;
+    color: #111827;
+    text-align: left;
+}
+
+.tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    background: #f3f4f6;
+    padding: 4px;
+    border-radius: 10px;
+}
+
+.tabs button {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: #4b5563;
+    font-family: inherit;
+}
+
+.tabs button.activa {
+    background: #4338ca;
+    color: #fff;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+}
+
+.oculto {
+    display: none;
+}
+
+label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: -10px;
+}
+
+input, select {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    width: 100%;
+}
+
+input:focus, select:focus {
+    outline: 2px solid #4338ca;
+    outline-offset: 1px;
+}
+
+.boton-entrar {
+    margin-top: 4px;
+    padding: 11px;
+    background: #4338ca;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.boton-entrar:disabled {
+    opacity: .75;
+    cursor: default;
+}
+
+.error {
+    margin: 0;
+    font-size: 13px;
+    color: #dc2626;
+    min-height: 16px;
+}
+
+.boton-salir {
+    padding: 11px 20px;
+    background: #ffffff;
+    color: #4338ca;
+    border: 1.5px solid #4338ca;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.etiqueta-rol {
+    margin: 0 0 4px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: #6366f1;
+    text-transform: uppercase;
+}
+
+.bienvenida {
+    margin: 0 0 28px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .4);
+    border-top-color: #fff;
+    animation: girar .6s linear infinite;
+}
+
+.cargando .spinner {
+    display: inline-block;
+}
+
+@keyframes girar {
+    to {
+        transform: rotate(360deg);
+    }
+}

@@ -1,0 +1,148 @@
+package com.posrestaurante.backend.platillo;
+
+import com.posrestaurante.backend.categoria.Categoria;
+import com.posrestaurante.backend.categoria.CategoriaRepository;
+import com.posrestaurante.backend.modificador.Modificador;
+import com.posrestaurante.backend.modificador.ModificadorRepository;
+import com.posrestaurante.backend.platillo.dto.ActivarPlatilloRequest;
+import com.posrestaurante.backend.platillo.dto.CrearPlatilloRequest;
+import com.posrestaurante.backend.platillo.dto.EditarPlatilloRequest;
+import com.posrestaurante.backend.platillo.dto.PlatilloResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/platillos")
+public class PlatilloController {
+
+    private final PlatilloRepository platilloRepository;
+    private final CategoriaRepository categoriaRepository;
+    private final ModificadorRepository modificadorRepository;
+
+    public PlatilloController(PlatilloRepository platilloRepository,
+                               CategoriaRepository categoriaRepository,
+                               ModificadorRepository modificadorRepository) {
+        this.platilloRepository = platilloRepository;
+        this.categoriaRepository = categoriaRepository;
+        this.modificadorRepository = modificadorRepository;
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public PlatilloResponse crearPlatillo(@RequestBody CrearPlatilloRequest request) {
+        if (request.nombre() == null || request.nombre().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "nombre requerido");
+        }
+        if (request.precio() == null || request.precio().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "precio debe ser positivo");
+        }
+        if (request.estacion() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "estacion requerida");
+        }
+        if (request.categoriaId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "categoria requerida");
+        }
+        Categoria categoria = categoriaRepository.findById(request.categoriaId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "categoria invalida"));
+
+        Set<UUID> modificadorIds = request.modificadorIds() == null ? Set.of() : request.modificadorIds();
+        Set<Modificador> modificadores = new HashSet<>(modificadorRepository.findAllById(modificadorIds));
+        if (modificadores.size() != modificadorIds.size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "modificador invalido");
+        }
+
+        Platillo platillo = new Platillo();
+        platillo.setNombre(request.nombre());
+        platillo.setDescripcion(request.descripcion());
+        platillo.setPrecio(request.precio());
+        platillo.setCategoria(categoria);
+        platillo.setEstacion(request.estacion());
+        platillo.setModificadores(modificadores);
+        platillo.setActivo(true);
+        platilloRepository.save(platillo);
+
+        return toResponse(platillo);
+    }
+
+    @GetMapping
+    public List<PlatilloResponse> listarPlatillos() {
+        return platilloRepository.findAll().stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @PatchMapping("/{id}/activo")
+    public PlatilloResponse cambiarActivo(@PathVariable UUID id, @RequestBody ActivarPlatilloRequest request) {
+        if (request.activo() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "activo es requerido");
+        }
+        Platillo platillo = platilloRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        platillo.setActivo(request.activo());
+        platilloRepository.save(platillo);
+        return toResponse(platillo);
+    }
+
+    @PatchMapping("/{id}")
+    public PlatilloResponse editarPlatillo(@PathVariable UUID id, @RequestBody EditarPlatilloRequest request) {
+        Platillo platillo = platilloRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        if (request.nombre() != null && !request.nombre().isBlank()) {
+            platillo.setNombre(request.nombre());
+        }
+        if (request.descripcion() != null) {
+            platillo.setDescripcion(request.descripcion());
+        }
+        if (request.precio() != null) {
+            if (request.precio().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "precio debe ser positivo");
+            }
+            platillo.setPrecio(request.precio());
+        }
+        if (request.categoriaId() != null) {
+            Categoria categoria = categoriaRepository.findById(request.categoriaId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "categoria invalida"));
+            platillo.setCategoria(categoria);
+        }
+        if (request.estacion() != null) {
+            platillo.setEstacion(request.estacion());
+        }
+        if (request.modificadorIds() != null) {
+            Set<Modificador> modificadores = new HashSet<>(modificadorRepository.findAllById(request.modificadorIds()));
+            if (modificadores.size() != request.modificadorIds().size()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "modificador invalido");
+            }
+            platillo.setModificadores(modificadores);
+        }
+
+        platilloRepository.save(platillo);
+        return toResponse(platillo);
+    }
+
+    private PlatilloResponse toResponse(Platillo platillo) {
+        Set<UUID> modificadorIds = platillo.getModificadores().stream()
+                .map(Modificador::getId)
+                .collect(Collectors.toSet());
+        return new PlatilloResponse(platillo.getId(), platillo.getNombre(), platillo.getDescripcion(),
+                platillo.getPrecio(), platillo.getCategoria().getId(), platillo.getCategoria().getNombre(),
+                platillo.getEstacion(), modificadorIds, platillo.isActivo());
+    }
+
+}

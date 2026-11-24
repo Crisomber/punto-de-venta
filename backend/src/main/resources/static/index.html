@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Punto de Venta — Iniciar sesión</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<div class="tarjeta">
+    <h1>Iniciar sesión</h1>
+    <div class="tabs">
+        <button type="button" id="tab-dueno" class="activa">Dueño</button>
+        <button type="button" id="tab-personal">Personal</button>
+    </div>
+
+    <form id="form-dueno">
+        <label for="dueno-username">Usuario</label>
+        <input type="text" id="dueno-username" required>
+        <label for="dueno-password">Contraseña</label>
+        <input type="password" id="dueno-password" required>
+        <button type="submit" class="boton-entrar" id="dueno-submit">
+            <span class="spinner"></span>
+            <span>Entrar</span>
+        </button>
+        <p class="error" id="dueno-error"></p>
+    </form>
+
+    <form id="form-personal" class="oculto">
+        <label for="personal-usuario">Nombre</label>
+        <select id="personal-usuario" required></select>
+        <label for="personal-pin">PIN</label>
+        <input type="password" id="personal-pin" inputmode="numeric" required>
+        <button type="submit" class="boton-entrar" id="personal-submit">
+            <span class="spinner"></span>
+            <span>Entrar</span>
+        </button>
+        <p class="error" id="personal-error"></p>
+    </form>
+</div>
+<script src="js/api.js"></script>
+<script src="js/login.js"></script>
+</body>
+</html>
