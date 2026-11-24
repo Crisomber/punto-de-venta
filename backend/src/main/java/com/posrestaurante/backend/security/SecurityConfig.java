@@ -17,8 +17,13 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // "/error" debe ser permitAll: un ResponseStatusException (404/409/400/etc.) hace que el
+                        // contenedor reenvie la peticion a /error como un segundo dispatch; si esa ruta exige
+                        // autenticacion, SecurityConfig la bloquea con 401 y pisa el status code original. MockMvc
+                        // no reproduce este segundo dispatch, asi que ninguna prueba de integracion lo detecta —
+                        // solo aparece contra un servidor real.
                         .requestMatchers("/actuator/health", "/api/auth/login/**", "/api/auth/staff",
-                                "/", "/*.html", "/css/**", "/js/**").permitAll()
+                                "/", "/*.html", "/css/**", "/js/**", "/error").permitAll()
                         .requestMatchers("/api/usuarios/**").hasRole("DUENO")
                         .requestMatchers(HttpMethod.GET, "/api/mesas/**").authenticated()
                         .requestMatchers("/api/mesas/**").hasRole("DUENO")
