@@ -9,6 +9,7 @@ import com.posrestaurante.backend.platillo.dto.CrearPlatilloRequest;
 import com.posrestaurante.backend.platillo.dto.EditarPlatilloRequest;
 import com.posrestaurante.backend.platillo.dto.PlatilloResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/platillos")
+@Transactional
 public class PlatilloController {
 
     private final PlatilloRepository platilloRepository;
