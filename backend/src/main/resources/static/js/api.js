@@ -80,6 +80,10 @@ function apiPatchAuth(ruta, cuerpo) {
     return apiFetch('PATCH', ruta, cuerpo ?? {});
 }
 
+function apiDeleteAuth(ruta) {
+    return apiFetch('DELETE', ruta);
+}
+
 function destinoSegunRol(rol) {
     switch (rol) {
         case 'DUENO': return 'dueno.html';

@@ -5,19 +5,178 @@
     <title>Punto de Venta — Dueño</title>
     <link rel="stylesheet" href="css/estilos.css">
 </head>
-<body>
-<div class="tarjeta">
-    <p class="etiqueta-rol">Dueño</p>
-    <h1 class="bienvenida" id="bienvenida"></h1>
-    <button class="boton-salir" id="btn-salir">Cerrar sesión</button>
+<body class="app">
+<div class="app-shell">
+    <div class="barra">
+        <h1>Dueño — <span id="nombre-usuario"></span></h1>
+        <button class="boton-secundario" id="btn-salir">Cerrar sesión</button>
+    </div>
+
+    <div class="tabs" style="max-width:500px">
+        <button type="button" id="tab-mesas" class="activa">Mesas</button>
+        <button type="button" id="tab-menu">Menú</button>
+        <button type="button" id="tab-usuarios">Usuarios</button>
+        <button type="button" id="tab-reportes">Reportes</button>
+    </div>
+
+    <!-- MESAS -->
+    <div id="vista-mesas" style="margin-top:20px">
+        <div class="panel">
+            <h2>Mesas</h2>
+            <ul class="lista-simple" id="lista-mesas"></ul>
+        </div>
+        <div class="panel">
+            <h2>Agregar mesa</h2>
+            <form id="form-mesa" class="fila-form">
+                <div>
+                    <label for="mesa-numero">Número</label>
+                    <input type="number" id="mesa-numero" min="1" style="width:100px">
+                </div>
+                <button type="submit" class="boton-primario">Agregar</button>
+            </form>
+            <p class="error" id="error-mesas"></p>
+        </div>
+    </div>
+
+    <!-- MENU -->
+    <div id="vista-menu" class="oculto" style="margin-top:20px">
+        <div class="panel">
+            <h2>Categorías</h2>
+            <ul class="lista-simple" id="lista-categorias"></ul>
+            <form id="form-categoria" class="fila-form" style="margin-top:12px">
+                <div>
+                    <label for="categoria-nombre">Nombre</label>
+                    <input type="text" id="categoria-nombre">
+                </div>
+                <button type="submit" class="boton-primario">Agregar</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <h2>Modificadores</h2>
+            <ul class="lista-simple" id="lista-modificadores"></ul>
+            <form id="form-modificador" class="fila-form" style="margin-top:12px">
+                <div>
+                    <label for="modificador-nombre">Nombre</label>
+                    <input type="text" id="modificador-nombre">
+                </div>
+                <button type="submit" class="boton-primario">Agregar</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <h2>Platillos</h2>
+            <ul class="lista-simple" id="lista-platillos"></ul>
+        </div>
+
+        <div class="panel">
+            <h2 id="titulo-form-platillo">Nuevo platillo</h2>
+            <form id="form-platillo">
+                <div class="fila-form">
+                    <div>
+                        <label for="platillo-nombre">Nombre</label>
+                        <input type="text" id="platillo-nombre">
+                    </div>
+                    <div>
+                        <label for="platillo-precio">Precio</label>
+                        <input type="number" id="platillo-precio" step="0.01" min="0.01" style="width:110px">
+                    </div>
+                    <div>
+                        <label for="platillo-categoria">Categoría</label>
+                        <select id="platillo-categoria" style="min-width:160px"></select>
+                    </div>
+                    <div>
+                        <label for="platillo-estacion">Estación</label>
+                        <select id="platillo-estacion">
+                            <option value="P1">P1</option>
+                            <option value="P2">P2</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="checkboxes-mod" id="checkboxes-mod-platillo" style="margin-top:12px"></div>
+                <div style="margin-top:12px;display:flex;gap:8px">
+                    <button type="submit" class="boton-primario" id="btn-guardar-platillo">Crear platillo</button>
+                    <button type="button" class="boton-secundario oculto" id="btn-cancelar-edicion">Cancelar edición</button>
+                </div>
+                <p class="error" id="error-platillo"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div id="vista-usuarios" class="oculto" style="margin-top:20px">
+        <div class="panel">
+            <h2>Personal</h2>
+            <ul class="lista-simple" id="lista-usuarios"></ul>
+        </div>
+        <div class="panel">
+            <h2>Crear usuario</h2>
+            <form id="form-usuario" class="fila-form">
+                <div>
+                    <label for="usuario-nombre">Nombre</label>
+                    <input type="text" id="usuario-nombre">
+                </div>
+                <div>
+                    <label for="usuario-rol">Rol</label>
+                    <select id="usuario-rol">
+                        <option value="MESERO">MESERO</option>
+                        <option value="CAJERO">CAJERO</option>
+                        <option value="CHEF">CHEF</option>
+                    </select>
+                </div>
+                <div id="campo-estacion-usuario">
+                    <label for="usuario-estacion">Estación</label>
+                    <select id="usuario-estacion">
+                        <option value="P1">P1</option>
+                        <option value="P2">P2</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="usuario-pin">PIN (4 dígitos)</label>
+                    <input type="text" id="usuario-pin" maxlength="4" style="width:90px">
+                </div>
+                <button type="submit" class="boton-primario">Crear</button>
+            </form>
+            <p class="error" id="error-usuario"></p>
+        </div>
+    </div>
+
+    <!-- REPORTES -->
+    <div id="vista-reportes" class="oculto" style="margin-top:20px">
+        <div class="panel">
+            <h2>Reporte de ventas</h2>
+            <div class="fila-form">
+                <div>
+                    <label for="reporte-desde">Desde</label>
+                    <input type="date" id="reporte-desde">
+                </div>
+                <div>
+                    <label for="reporte-hasta">Hasta</label>
+                    <input type="date" id="reporte-hasta">
+                </div>
+                <button type="button" class="boton-primario" id="btn-consultar-reporte">Consultar</button>
+            </div>
+            <p class="error" id="error-reporte"></p>
+        </div>
+
+        <div class="panel oculto" id="panel-totales">
+            <h2>Totales</h2>
+            <ul class="lista-simple">
+                <li class="fila-lista"><span>Total vendido</span><span id="r-total-vendido"></span></li>
+                <li class="fila-lista"><span>Efectivo</span><span id="r-total-efectivo"></span></li>
+                <li class="fila-lista"><span>Tarjeta</span><span id="r-total-tarjeta"></span></li>
+                <li class="fila-lista"><span>Ticket promedio</span><span id="r-ticket-promedio"></span></li>
+                <li class="fila-lista"><span>Cuentas cobradas</span><span id="r-cantidad-cuentas"></span></li>
+            </ul>
+        </div>
+
+        <div class="panel oculto" id="panel-ranking">
+            <h2>Platillos más vendidos</h2>
+            <ul class="lista-simple" id="lista-ranking"></ul>
+        </div>
+    </div>
 </div>
 <script src="js/api.js"></script>
-<script>
-    const sesion = requerirSesion('DUENO');
-    if (sesion) {
-        document.getElementById('bienvenida').textContent = 'Bienvenido, ' + sesion.nombre;
-    }
-    document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
-</script>
+<script src="js/dueno.js"></script>
 </body>
 </html>
