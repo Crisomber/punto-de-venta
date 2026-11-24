@@ -15,6 +15,187 @@ body {
     padding: 40px;
 }
 
+/* Pantallas de app (mesero/cocina/caja/dueno): contenido de arriba hacia
+   abajo en vez de la tarjeta centrada que usa el login. */
+body.app {
+    display: block;
+    padding: 0;
+}
+
+.app-shell {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.barra h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.panel {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 8px 24px rgba(0, 0, 0, .06);
+    margin-bottom: 16px;
+}
+
+.panel h2 {
+    margin: 0 0 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.rejilla-mesas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 10px;
+}
+
+.boton-mesa {
+    padding: 14px 8px;
+    border-radius: 10px;
+    border: 1.5px solid transparent;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.boton-mesa.libre {
+    background: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+}
+
+.boton-mesa.ocupada {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+
+.lista-simple {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fila-lista {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #f9fafb;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.fila-lista button {
+    background: #4338ca;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.vacio {
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+.boton-secundario {
+    background: #ffffff;
+    color: #4338ca;
+    border: 1.5px solid #4338ca;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.boton-primario {
+    background: #4338ca;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.boton-primario:disabled, .boton-secundario:disabled {
+    opacity: .6;
+    cursor: default;
+}
+
+.fila-form {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.fila-form > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fila-form label {
+    margin: 0;
+}
+
+.checkboxes-mod {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: #374151;
+}
+
+.checkboxes-mod label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 400;
+}
+
+.checkboxes-mod input {
+    width: auto;
+}
+
+.estado-pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #eef2ff;
+    color: #4338ca;
+}
+
 .tarjeta {
     width: 100%;
     max-width: 380px;
