@@ -35,6 +35,60 @@ function requerirSesion(rolEsperado) {
     return sesion;
 }
 
+// Peticion autenticada generica: adjunta el Authorization de la sesion actual.
+// Si la API responde 401, normalmente es el token vencido o invalido, y lo
+// correcto es limpiar la sesion y mandar a index.html en vez de dejar la
+// pantalla en un estado roto. La excepcion es un endpoint donde un 401
+// significa otra cosa de negocio (ej. "contrasena actual incorrecta", igual
+// que un login fallido) — para esos, pasar {cerrarSesionSi401: false} y
+// manejar el error como cualquier otro.
+async function apiFetch(metodo, ruta, cuerpo, opciones = {}) {
+    const cerrarSesionSi401 = opciones.cerrarSesionSi401 !== false;
+    const sesion = obtenerSesion();
+    const fetchOpciones = { method: metodo, headers: {} };
+    if (sesion) {
+        fetchOpciones.headers['Authorization'] = 'Bearer ' + sesion.token;
+    }
+    if (cuerpo !== undefined) {
+        fetchOpciones.headers['Content-Type'] = 'application/json';
+        fetchOpciones.body = JSON.stringify(cuerpo);
+    }
+    const respuesta = await fetch(ruta, fetchOpciones);
+    if (respuesta.status === 401 && cerrarSesionSi401) {
+        cerrarSesion();
+        throw new Error('sesion expirada');
+    }
+    if (!respuesta.ok) {
+        let mensaje;
+        try {
+            mensaje = (await respuesta.json()).message;
+        } catch (e) {
+            mensaje = null;
+        }
+        throw new Error(mensaje || ('la peticion fallo con estado ' + respuesta.status));
+    }
+    if (respuesta.status === 204) {
+        return null;
+    }
+    return respuesta.json();
+}
+
+function apiGet(ruta) {
+    return apiFetch('GET', ruta);
+}
+
+function apiPostAuth(ruta, cuerpo) {
+    return apiFetch('POST', ruta, cuerpo ?? {});
+}
+
+function apiPatchAuth(ruta, cuerpo, opciones) {
+    return apiFetch('PATCH', ruta, cuerpo ?? {}, opciones);
+}
+
+function apiDeleteAuth(ruta) {
+    return apiFetch('DELETE', ruta);
+}
+
 function destinoSegunRol(rol) {
     switch (rol) {
         case 'DUENO': return 'dueno.html';

@@ -169,13 +169,24 @@ class CambiarEstadoItemControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void invalidEstadoValueFails() throws Exception {
+    void unknownEstadoValueFails() throws Exception {
         OrdenItem item = unItemConTicket(unaOrdenEnviada(), Estacion.P2);
 
         mockMvc.perform(patch("/api/ordenes/items/" + item.getId() + "/estado")
                         .header("Authorization", "Bearer " + chefToken(Estacion.P2))
                         .contentType(APPLICATION_JSON)
                         .content("{\"estado\":\"ENTREGADO\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void pendienteEstadoValueFails() throws Exception {
+        OrdenItem item = unItemConTicket(unaOrdenEnviada(), Estacion.P2);
+
+        mockMvc.perform(patch("/api/ordenes/items/" + item.getId() + "/estado")
+                        .header("Authorization", "Bearer " + chefToken(Estacion.P2))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"estado\":\"PENDIENTE\"}"))
                 .andExpect(status().isBadRequest());
     }
 

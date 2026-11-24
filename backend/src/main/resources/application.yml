@@ -11,6 +11,17 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
+server:
+  # La mayoria de los hostings de contenedores (Render, Railway, Fly.io) inyectan
+  # su propio puerto en la variable PORT y esperan que el proceso escuche ahi.
+  # Sin PORT (local, Testcontainers) sigue siendo 8080 como siempre.
+  port: ${PORT:8080}
+  error:
+    # Cada ResponseStatusException en este backend se lanza con un mensaje pensado
+    # para mostrarse tal cual al usuario (ej. "ya existe una mesa con ese numero").
+    # Sin esto, Spring Boot lo omite del cuerpo JSON por defecto y el frontend solo
+    # ve "Forbidden"/"Bad Request" genericos.
+    include-message: always
 management:
   endpoints:
     web:

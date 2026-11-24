@@ -5,19 +5,49 @@
     <title>Punto de Venta — Caja</title>
     <link rel="stylesheet" href="css/estilos.css">
 </head>
-<body>
-<div class="tarjeta">
-    <p class="etiqueta-rol">Caja</p>
-    <h1 class="bienvenida" id="bienvenida"></h1>
-    <button class="boton-salir" id="btn-salir">Cerrar sesión</button>
+<body class="app">
+<div class="app-shell">
+    <div class="barra">
+        <h1>Caja — <span id="nombre-usuario"></span></h1>
+        <button class="boton-secundario" id="btn-salir">Cerrar sesión</button>
+    </div>
+
+    <div id="vista-pendientes">
+        <div class="panel">
+            <h2>Cuentas pendientes de cobro</h2>
+            <button class="boton-secundario" id="btn-actualizar" style="margin-bottom:16px">Actualizar</button>
+            <ul class="lista-simple" id="lista-pendientes"></ul>
+        </div>
+        <p class="error" id="error-pendientes"></p>
+    </div>
+
+    <div id="vista-cobro" class="oculto">
+        <button class="boton-secundario" id="btn-volver">← Volver</button>
+        <div class="panel" style="margin-top:16px">
+            <h2 id="titulo-cobro"></h2>
+            <ul class="lista-simple" id="lista-items-cobro"></ul>
+            <p style="font-weight:600;margin-top:12px">Total estimado: $<span id="total-estimado"></span></p>
+        </div>
+        <div class="panel" id="panel-metodo">
+            <h2>Método de pago</h2>
+            <div class="fila-form">
+                <label><input type="radio" name="metodo" value="EFECTIVO" checked style="width:auto"> Efectivo</label>
+                <label><input type="radio" name="metodo" value="TARJETA" style="width:auto"> Tarjeta</label>
+                <button class="boton-primario" id="btn-confirmar-cobro" style="margin-left:16px">Confirmar cobro</button>
+            </div>
+            <p class="error" id="error-cobro"></p>
+        </div>
+
+        <div class="panel oculto" id="panel-recibo">
+            <h2>Recibo</h2>
+            <p id="recibo-detalle"></p>
+            <ul class="lista-simple" id="recibo-items"></ul>
+            <p style="font-weight:600;margin-top:12px">Monto cobrado: $<span id="recibo-monto"></span> (<span id="recibo-metodo"></span>)</p>
+            <button class="boton-primario" id="btn-listo" style="margin-top:12px">Listo</button>
+        </div>
+    </div>
 </div>
 <script src="js/api.js"></script>
-<script>
-    const sesion = requerirSesion('CAJERO');
-    if (sesion) {
-        document.getElementById('bienvenida').textContent = 'Bienvenido, ' + sesion.nombre;
-    }
-    document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
-</script>
+<script src="js/caja.js"></script>
 </body>
 </html>
