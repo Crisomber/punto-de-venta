@@ -349,3 +349,45 @@ input:focus, select:focus {
         transform: rotate(360deg);
     }
 }
+
+.ticket-cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.item-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.item-acciones {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.boton-mini {
+    background: #ffffff;
+    color: #4338ca;
+    border: 1.5px solid #4338ca;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.boton-mini:disabled {
+    opacity: .5;
+    cursor: default;
+}
