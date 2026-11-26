@@ -26,7 +26,8 @@ async function iniciar() {
     document.getElementById('usuario-rol').addEventListener('change', actualizarVisibilidadEstacion);
     document.getElementById('form-usuario').addEventListener('submit', crearUsuario);
     document.getElementById('form-password').addEventListener('submit', cambiarPassword);
-    document.getElementById('btn-consultar-reporte').addEventListener('click', consultarReporte);
+    document.getElementById('btn-consultar-reporte').addEventListener('click', () =>
+        conBotonCargando(document.getElementById('btn-consultar-reporte'), consultarReporte));
 
     actualizarVisibilidadEstacion();
     await mostrarPestana('mesas');
@@ -61,7 +62,7 @@ async function cargarMesas() {
         texto.textContent = 'Mesa ' + mesa.numero + ' — ' + mesa.estado;
         const boton = document.createElement('button');
         boton.textContent = 'Eliminar';
-        boton.addEventListener('click', () => eliminarMesa(mesa));
+        boton.addEventListener('click', () => eliminarMesa(mesa, boton));
         li.appendChild(texto);
         li.appendChild(boton);
         lista.appendChild(li);
@@ -75,28 +76,32 @@ async function crearMesa(evento) {
     evento.preventDefault();
     const error = document.getElementById('error-mesas');
     error.textContent = '';
-    try {
-        const numero = parseInt(document.getElementById('mesa-numero').value, 10);
-        await apiPostAuth('/api/mesas', { numero });
-        document.getElementById('mesa-numero').value = '';
-        await cargarMesas();
-    } catch (e) {
-        error.textContent = e.message;
-    }
+    await conBotonCargando(evento.submitter, async () => {
+        try {
+            const numero = parseInt(document.getElementById('mesa-numero').value, 10);
+            await apiPostAuth('/api/mesas', { numero });
+            document.getElementById('mesa-numero').value = '';
+            await cargarMesas();
+        } catch (e) {
+            error.textContent = e.message;
+        }
+    });
 }
 
-async function eliminarMesa(mesa) {
+async function eliminarMesa(mesa, boton) {
     if (!confirm('¿Eliminar la mesa ' + mesa.numero + '?')) {
         return;
     }
     const error = document.getElementById('error-mesas');
     error.textContent = '';
-    try {
-        await apiDeleteAuth('/api/mesas/' + mesa.id);
-        await cargarMesas();
-    } catch (e) {
-        error.textContent = e.message;
-    }
+    await conBotonCargando(boton, async () => {
+        try {
+            await apiDeleteAuth('/api/mesas/' + mesa.id);
+            await cargarMesas();
+        } catch (e) {
+            error.textContent = e.message;
+        }
+    });
 }
 
 // ---------- Menu: categorias, modificadores, platillos ----------
@@ -136,9 +141,11 @@ async function crearCategoria(evento) {
     if (!input.value.trim()) {
         return;
     }
-    await apiPostAuth('/api/categorias', { nombre: input.value.trim() });
-    input.value = '';
-    await cargarMenu();
+    await conBotonCargando(evento.submitter, async () => {
+        await apiPostAuth('/api/categorias', { nombre: input.value.trim() });
+        input.value = '';
+        await cargarMenu();
+    });
 }
 
 function renderModificadores() {
@@ -161,9 +168,11 @@ async function crearModificador(evento) {
     if (!input.value.trim()) {
         return;
     }
-    await apiPostAuth('/api/modificadores', { nombre: input.value.trim() });
-    input.value = '';
-    await cargarMenu();
+    await conBotonCargando(evento.submitter, async () => {
+        await apiPostAuth('/api/modificadores', { nombre: input.value.trim() });
+        input.value = '';
+        await cargarMenu();
+    });
 }
 
 function renderSelectCategorias() {
@@ -226,7 +235,7 @@ function renderPlatillos(platillos) {
         const btnActivo = document.createElement('button');
         btnActivo.className = 'boton-mini';
         btnActivo.textContent = platillo.activo ? 'Desactivar' : 'Activar';
-        btnActivo.addEventListener('click', () => cambiarActivoPlatillo(platillo));
+        btnActivo.addEventListener('click', () => cambiarActivoPlatillo(platillo, btnActivo));
 
         acciones.appendChild(pill);
         acciones.appendChild(btnEditar);
@@ -344,22 +353,26 @@ async function guardarPlatillo(evento) {
         cuerpo.variantes = [];
     }
 
-    try {
-        if (editandoPlatilloId) {
-            await apiPatchAuth('/api/platillos/' + editandoPlatilloId, cuerpo);
-        } else {
-            await apiPostAuth('/api/platillos', cuerpo);
+    await conBotonCargando(evento.submitter, async () => {
+        try {
+            if (editandoPlatilloId) {
+                await apiPatchAuth('/api/platillos/' + editandoPlatilloId, cuerpo);
+            } else {
+                await apiPostAuth('/api/platillos', cuerpo);
+            }
+            cancelarEdicionPlatillo();
+            await cargarMenu();
+        } catch (e) {
+            error.textContent = e.message;
         }
-        cancelarEdicionPlatillo();
-        await cargarMenu();
-    } catch (e) {
-        error.textContent = e.message;
-    }
+    });
 }
 
-async function cambiarActivoPlatillo(platillo) {
-    await apiPatchAuth('/api/platillos/' + platillo.id + '/activo', { activo: !platillo.activo });
-    await cargarMenu();
+async function cambiarActivoPlatillo(platillo, boton) {
+    await conBotonCargando(boton, async () => {
+        await apiPatchAuth('/api/platillos/' + platillo.id + '/activo', { activo: !platillo.activo });
+        await cargarMenu();
+    });
 }
 
 // ---------- Usuarios ----------
@@ -394,7 +407,7 @@ async function cargarUsuarios() {
             const btnActivo = document.createElement('button');
             btnActivo.className = 'boton-mini';
             btnActivo.textContent = usuario.activo ? 'Desactivar' : 'Activar';
-            btnActivo.addEventListener('click', () => cambiarActivoUsuario(usuario));
+            btnActivo.addEventListener('click', () => cambiarActivoUsuario(usuario, btnActivo));
             acciones.appendChild(btnActivo);
         }
 
@@ -415,19 +428,23 @@ async function crearUsuario(evento) {
         estacion: rol === 'CHEF' ? document.getElementById('usuario-estacion').value : null,
         pin: document.getElementById('usuario-pin').value,
     };
-    try {
-        await apiPostAuth('/api/usuarios', cuerpo);
-        document.getElementById('form-usuario').reset();
-        actualizarVisibilidadEstacion();
-        await cargarUsuarios();
-    } catch (e) {
-        error.textContent = e.message;
-    }
+    await conBotonCargando(evento.submitter, async () => {
+        try {
+            await apiPostAuth('/api/usuarios', cuerpo);
+            document.getElementById('form-usuario').reset();
+            actualizarVisibilidadEstacion();
+            await cargarUsuarios();
+        } catch (e) {
+            error.textContent = e.message;
+        }
+    });
 }
 
-async function cambiarActivoUsuario(usuario) {
-    await apiPatchAuth('/api/usuarios/' + usuario.id + '/activo', { activo: !usuario.activo });
-    await cargarUsuarios();
+async function cambiarActivoUsuario(usuario, boton) {
+    await conBotonCargando(boton, async () => {
+        await apiPatchAuth('/api/usuarios/' + usuario.id + '/activo', { activo: !usuario.activo });
+        await cargarUsuarios();
+    });
 }
 
 async function cambiarPassword(evento) {
@@ -436,16 +453,18 @@ async function cambiarPassword(evento) {
     const exito = document.getElementById('exito-password');
     error.textContent = '';
     exito.textContent = '';
-    try {
-        await apiPatchAuth('/api/auth/password', {
-            passwordActual: document.getElementById('password-actual').value,
-            passwordNueva: document.getElementById('password-nueva').value,
-        }, { cerrarSesionSi401: false });
-        document.getElementById('form-password').reset();
-        exito.textContent = 'Contraseña actualizada.';
-    } catch (e) {
-        error.textContent = e.message;
-    }
+    await conBotonCargando(evento.submitter, async () => {
+        try {
+            await apiPatchAuth('/api/auth/password', {
+                passwordActual: document.getElementById('password-actual').value,
+                passwordNueva: document.getElementById('password-nueva').value,
+            }, { cerrarSesionSi401: false });
+            document.getElementById('form-password').reset();
+            exito.textContent = 'Contraseña actualizada.';
+        } catch (e) {
+            error.textContent = e.message;
+        }
+    });
 }
 
 // ---------- Reportes ----------

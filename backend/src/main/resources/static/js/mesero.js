@@ -11,14 +11,17 @@ async function iniciar() {
     document.getElementById('nombre-usuario').textContent = sesion.nombre;
     document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
     document.getElementById('btn-volver').addEventListener('click', mostrarVistaMesas);
-    document.getElementById('btn-nueva-para-llevar').addEventListener('click', crearOrdenParaLlevar);
+    document.getElementById('btn-nueva-para-llevar').addEventListener('click', () =>
+        conBotonCargando(document.getElementById('btn-nueva-para-llevar'), crearOrdenParaLlevar));
     document.getElementById('select-platillo').addEventListener('change', () => {
         renderModificadoresDisponibles();
         renderVarianteDisponible();
     });
     document.getElementById('form-agregar-item').addEventListener('submit', agregarItem);
-    document.getElementById('btn-enviar').addEventListener('click', enviarOrden);
-    document.getElementById('btn-cerrar').addEventListener('click', cerrarCuenta);
+    document.getElementById('btn-enviar').addEventListener('click', () =>
+        conBotonCargando(document.getElementById('btn-enviar'), enviarOrden));
+    document.getElementById('btn-cerrar').addEventListener('click', () =>
+        conBotonCargando(document.getElementById('btn-cerrar'), cerrarCuenta));
 
     const [listaPlatillos, listaModificadores] = await Promise.all([
         apiGet('/api/platillos'),
@@ -102,7 +105,7 @@ function renderMesas(mesas, ordenes) {
         boton.type = 'button';
         boton.className = 'boton-mesa ' + (mesa.estado === 'OCUPADA' ? 'ocupada' : 'libre');
         boton.textContent = 'Mesa ' + mesa.numero;
-        boton.addEventListener('click', () => clickMesa(mesa, ordenes));
+        boton.addEventListener('click', () => conBotonCargando(boton, () => clickMesa(mesa, ordenes)));
         grid.appendChild(boton);
     }
     if (ordenadas.length === 0) {
@@ -121,7 +124,7 @@ function renderParaLlevar(ordenes) {
         texto.textContent = 'Orden para llevar — ' + orden.items.length + ' platillo(s) — ' + orden.estado;
         const boton = document.createElement('button');
         boton.textContent = 'Abrir';
-        boton.addEventListener('click', () => mostrarOrden(orden.id));
+        boton.addEventListener('click', () => conBotonCargando(boton, () => mostrarOrden(orden.id)));
         li.appendChild(texto);
         li.appendChild(boton);
         lista.appendChild(li);
@@ -214,14 +217,16 @@ async function agregarItem(evento) {
     if (platillo && platillo.variantes.length) {
         item.varianteId = document.getElementById('select-variante').value;
     }
-    try {
-        await apiPostAuth('/api/ordenes/' + ordenActualId + '/items', {
-            items: [item],
-        });
-        await refrescarOrden();
-    } catch (e) {
-        error.textContent = e.message;
-    }
+    await conBotonCargando(evento.submitter, async () => {
+        try {
+            await apiPostAuth('/api/ordenes/' + ordenActualId + '/items', {
+                items: [item],
+            });
+            await refrescarOrden();
+        } catch (e) {
+            error.textContent = e.message;
+        }
+    });
 }
 
 async function enviarOrden() {

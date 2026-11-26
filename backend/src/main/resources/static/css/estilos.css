@@ -419,18 +419,36 @@ input:focus, select:focus {
     color: var(--color-texto);
 }
 
-.spinner {
-    display: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, .4);
-    border-top-color: #fff;
-    animation: girar .6s linear infinite;
+/* Pequena animacion de "presionado" en cualquier boton de la app. */
+button {
+    transition: transform .08s ease;
 }
 
-.cargando .spinner {
-    display: inline-block;
+button:active:not(:disabled) {
+    transform: scale(.96);
+}
+
+/* Spinner universal: no requiere marcado adicional en el boton. El texto se
+   vacia por JS (conBotonCargando en api.js) y este pseudo-elemento dibuja un
+   anillo giratorio del mismo color que el boton (currentColor), asi que
+   funciona igual sobre fondos solidos (boton-primario) o claros (boton-mini). */
+button.cargando {
+    position: relative;
+    pointer-events: none;
+}
+
+button.cargando::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    margin: -7px 0 0 -7px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    animation: girar .6s linear infinite;
 }
 
 @keyframes girar {
@@ -511,6 +529,11 @@ input:focus, select:focus {
     text-align: left;
     font-family: inherit;
     color: var(--color-texto);
+    width: 100%;
+}
+
+button.tarjeta-platillo {
+    cursor: pointer;
 }
 
 .tarjeta-platillo .nombre {

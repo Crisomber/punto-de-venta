@@ -89,6 +89,27 @@ function apiDeleteAuth(ruta) {
     return apiFetch('DELETE', ruta);
 }
 
+// Deshabilita el boton y le muestra un spinner (via CSS, clase "cargando")
+// mientras `tarea` esta en curso, sin requerir marcado adicional en el HTML:
+// el texto se guarda y se restaura solo. Util para cualquier accion que
+// dispare una peticion al servidor y no sea instantanea.
+async function conBotonCargando(boton, tarea) {
+    if (!boton) {
+        return tarea();
+    }
+    const textoOriginal = boton.textContent;
+    boton.disabled = true;
+    boton.classList.add('cargando');
+    boton.textContent = '';
+    try {
+        return await tarea();
+    } finally {
+        boton.disabled = false;
+        boton.classList.remove('cargando');
+        boton.textContent = textoOriginal;
+    }
+}
+
 function destinoSegunRol(rol) {
     switch (rol) {
         case 'DUENO': return 'dueno.html';

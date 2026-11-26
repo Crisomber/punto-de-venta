@@ -13,7 +13,8 @@ async function iniciar() {
         }
         cerrarSesion();
     });
-    document.getElementById('btn-actualizar').addEventListener('click', cargarTickets);
+    document.getElementById('btn-actualizar').addEventListener('click', () =>
+        conBotonCargando(document.getElementById('btn-actualizar'), cargarTickets));
 
     await cargarTickets();
     intervaloPolling = setInterval(cargarTickets, 8000);
@@ -78,12 +79,12 @@ function renderItem(item) {
     const btnPrep = document.createElement('button');
     btnPrep.className = 'boton-mini';
     btnPrep.textContent = 'En preparación';
-    btnPrep.addEventListener('click', () => marcarEstado(item.id, 'EN_PREPARACION'));
+    btnPrep.addEventListener('click', () => conBotonCargando(btnPrep, () => marcarEstado(item.id, 'EN_PREPARACION')));
 
     const btnListo = document.createElement('button');
     btnListo.className = 'boton-mini';
     btnListo.textContent = 'Listo';
-    btnListo.addEventListener('click', () => marcarEstado(item.id, 'LISTO'));
+    btnListo.addEventListener('click', () => conBotonCargando(btnListo, () => marcarEstado(item.id, 'LISTO')));
 
     acciones.appendChild(pill);
     acciones.appendChild(btnPrep);
