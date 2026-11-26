@@ -1,5 +1,56 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+:root {
+    --color-fondo: #f3f4f6;
+    --color-superficie: #ffffff;
+    --color-texto: #111827;
+    --color-texto-secundario: #374151;
+    --color-texto-muted: #9ca3af;
+    --color-borde: #d1d5db;
+    --color-acento: #4338ca;
+    --color-acento-texto: #ffffff;
+    --color-fondo-sutil: #f9fafb;
+    --color-fondo-tabs: #f3f4f6;
+    --color-error: #dc2626;
+    --color-exito: #047857;
+    --color-libre-fondo: #ecfdf5;
+    --color-libre-texto: #047857;
+    --color-libre-borde: #a7f3d0;
+    --color-ocupada-fondo: #fef2f2;
+    --color-ocupada-texto: #b91c1c;
+    --color-ocupada-borde: #fecaca;
+    --color-pill-fondo: #eef2ff;
+    --color-pill-texto: #4338ca;
+    --color-rol-etiqueta: #6366f1;
+    --sombra-panel: 0 1px 3px rgba(0, 0, 0, .08), 0 8px 24px rgba(0, 0, 0, .06);
+    --altura-barra-tema: 48px;
+}
+
+:root.oscuro {
+    --color-fondo: #0f172a;
+    --color-superficie: #1e293b;
+    --color-texto: #f1f5f9;
+    --color-texto-secundario: #cbd5e1;
+    --color-texto-muted: #64748b;
+    --color-borde: #334155;
+    --color-acento: #6366f1;
+    --color-acento-texto: #ffffff;
+    --color-fondo-sutil: #273449;
+    --color-fondo-tabs: #1e293b;
+    --color-error: #f87171;
+    --color-exito: #34d399;
+    --color-libre-fondo: rgba(16, 185, 129, .15);
+    --color-libre-texto: #34d399;
+    --color-libre-borde: rgba(16, 185, 129, .35);
+    --color-ocupada-fondo: rgba(248, 113, 113, .15);
+    --color-ocupada-texto: #f87171;
+    --color-ocupada-borde: rgba(248, 113, 113, .35);
+    --color-pill-fondo: rgba(99, 102, 241, .2);
+    --color-pill-texto: #a5b4fc;
+    --color-rol-etiqueta: #a5b4fc;
+    --sombra-panel: 0 1px 3px rgba(0, 0, 0, .5), 0 8px 24px rgba(0, 0, 0, .35);
+}
+
 * {
     box-sizing: border-box;
 }
@@ -7,12 +58,15 @@
 body {
     margin: 0;
     font-family: 'Inter', system-ui, sans-serif;
-    background: #f3f4f6;
+    background: var(--color-fondo);
+    color: var(--color-texto);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 40px;
+    padding-top: calc(40px + var(--altura-barra-tema));
+    transition: background-color .15s, color .15s;
 }
 
 /* Pantallas de app (mesero/cocina/caja/dueno): contenido de arriba hacia
@@ -26,6 +80,36 @@ body.app {
     max-width: 960px;
     margin: 0 auto;
     padding: 24px;
+    padding-top: calc(24px + var(--altura-barra-tema));
+}
+
+/* Barra superior fija, igual en todas las pantallas: por ahora solo lleva
+   el botón de modo oscuro/claro. */
+.barra-tema {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--altura-barra-tema);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 20px;
+    background: var(--color-superficie);
+    border-bottom: 1px solid var(--color-borde);
+    z-index: 100;
+}
+
+.boton-tema {
+    background: transparent;
+    color: var(--color-texto-secundario);
+    border: 1px solid var(--color-borde);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
 }
 
 .barra {
@@ -39,22 +123,23 @@ body.app {
     margin: 0;
     font-size: 20px;
     font-weight: 600;
-    color: #111827;
+    color: var(--color-texto);
 }
 
 .panel {
-    background: #ffffff;
+    background: var(--color-superficie);
     border-radius: 16px;
     padding: 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 8px 24px rgba(0, 0, 0, .06);
+    box-shadow: var(--sombra-panel);
     margin-bottom: 16px;
+    transition: background-color .15s;
 }
 
 .panel h2 {
     margin: 0 0 16px;
     font-size: 16px;
     font-weight: 600;
-    color: #111827;
+    color: var(--color-texto);
 }
 
 .rejilla-mesas {
@@ -74,15 +159,15 @@ body.app {
 }
 
 .boton-mesa.libre {
-    background: #ecfdf5;
-    color: #047857;
-    border-color: #a7f3d0;
+    background: var(--color-libre-fondo);
+    color: var(--color-libre-texto);
+    border-color: var(--color-libre-borde);
 }
 
 .boton-mesa.ocupada {
-    background: #fef2f2;
-    color: #b91c1c;
-    border-color: #fecaca;
+    background: var(--color-ocupada-fondo);
+    color: var(--color-ocupada-texto);
+    border-color: var(--color-ocupada-borde);
 }
 
 .lista-simple {
@@ -99,14 +184,15 @@ body.app {
     justify-content: space-between;
     align-items: center;
     padding: 10px 14px;
-    background: #f9fafb;
+    background: var(--color-fondo-sutil);
     border-radius: 8px;
     font-size: 14px;
+    color: var(--color-texto);
 }
 
 .fila-lista button {
-    background: #4338ca;
-    color: #fff;
+    background: var(--color-acento);
+    color: var(--color-acento-texto);
     border: none;
     border-radius: 6px;
     padding: 6px 12px;
@@ -117,14 +203,14 @@ body.app {
 }
 
 .vacio {
-    color: #9ca3af;
+    color: var(--color-texto-muted);
     font-size: 14px;
 }
 
 .boton-secundario {
-    background: #ffffff;
-    color: #4338ca;
-    border: 1.5px solid #4338ca;
+    background: var(--color-superficie);
+    color: var(--color-acento);
+    border: 1.5px solid var(--color-acento);
     border-radius: 8px;
     padding: 10px 16px;
     font-size: 14px;
@@ -134,8 +220,8 @@ body.app {
 }
 
 .boton-primario {
-    background: #4338ca;
-    color: #fff;
+    background: var(--color-acento);
+    color: var(--color-acento-texto);
     border: none;
     border-radius: 8px;
     padding: 10px 16px;
@@ -172,7 +258,7 @@ body.app {
     gap: 14px;
     flex-wrap: wrap;
     font-size: 13px;
-    color: #374151;
+    color: var(--color-texto-secundario);
 }
 
 .checkboxes-mod label {
@@ -192,25 +278,26 @@ body.app {
     border-radius: 999px;
     font-size: 12px;
     font-weight: 600;
-    background: #eef2ff;
-    color: #4338ca;
+    background: var(--color-pill-fondo);
+    color: var(--color-pill-texto);
 }
 
 .tarjeta {
     width: 100%;
     max-width: 380px;
-    background: #ffffff;
+    background: var(--color-superficie);
     border-radius: 16px;
     padding: 40px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 8px 24px rgba(0, 0, 0, .06);
+    box-shadow: var(--sombra-panel);
     text-align: center;
+    transition: background-color .15s;
 }
 
 .tarjeta h1 {
     margin: 0 0 24px;
     font-size: 22px;
     font-weight: 600;
-    color: #111827;
+    color: var(--color-texto);
     text-align: left;
 }
 
@@ -218,7 +305,7 @@ body.app {
     display: flex;
     gap: 4px;
     margin-bottom: 24px;
-    background: #f3f4f6;
+    background: var(--color-fondo-tabs);
     padding: 4px;
     border-radius: 10px;
 }
@@ -232,13 +319,13 @@ body.app {
     font-weight: 600;
     cursor: pointer;
     background: transparent;
-    color: #4b5563;
+    color: var(--color-texto-secundario);
     font-family: inherit;
 }
 
 .tabs button.activa {
-    background: #4338ca;
-    color: #fff;
+    background: var(--color-acento);
+    color: var(--color-acento-texto);
 }
 
 form {
@@ -255,29 +342,31 @@ form {
 label {
     font-size: 13px;
     font-weight: 500;
-    color: #374151;
+    color: var(--color-texto-secundario);
     margin-bottom: -10px;
 }
 
 input, select {
     padding: 10px 12px;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--color-borde);
     border-radius: 8px;
     font-size: 14px;
     font-family: inherit;
     width: 100%;
+    background: var(--color-superficie);
+    color: var(--color-texto);
 }
 
 input:focus, select:focus {
-    outline: 2px solid #4338ca;
+    outline: 2px solid var(--color-acento);
     outline-offset: 1px;
 }
 
 .boton-entrar {
     margin-top: 4px;
     padding: 11px;
-    background: #4338ca;
-    color: #fff;
+    background: var(--color-acento);
+    color: var(--color-acento-texto);
     border: none;
     border-radius: 8px;
     font-size: 14px;
@@ -298,15 +387,15 @@ input:focus, select:focus {
 .error {
     margin: 0;
     font-size: 13px;
-    color: #dc2626;
+    color: var(--color-error);
     min-height: 16px;
 }
 
 .boton-salir {
     padding: 11px 20px;
-    background: #ffffff;
-    color: #4338ca;
-    border: 1.5px solid #4338ca;
+    background: var(--color-superficie);
+    color: var(--color-acento);
+    border: 1.5px solid var(--color-acento);
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
@@ -319,7 +408,7 @@ input:focus, select:focus {
     font-size: 12px;
     font-weight: 600;
     letter-spacing: .04em;
-    color: #6366f1;
+    color: var(--color-rol-etiqueta);
     text-transform: uppercase;
 }
 
@@ -327,7 +416,7 @@ input:focus, select:focus {
     margin: 0 0 28px;
     font-size: 20px;
     font-weight: 600;
-    color: #111827;
+    color: var(--color-texto);
 }
 
 .spinner {
@@ -362,11 +451,12 @@ input:focus, select:focus {
     justify-content: space-between;
     align-items: center;
     padding: 10px 14px;
-    background: #f9fafb;
+    background: var(--color-fondo-sutil);
     border-radius: 8px;
     margin-bottom: 8px;
     gap: 12px;
     flex-wrap: wrap;
+    color: var(--color-texto);
 }
 
 .item-acciones {
@@ -376,9 +466,9 @@ input:focus, select:focus {
 }
 
 .boton-mini {
-    background: #ffffff;
-    color: #4338ca;
-    border: 1.5px solid #4338ca;
+    background: var(--color-superficie);
+    color: var(--color-acento);
+    border: 1.5px solid var(--color-acento);
     border-radius: 6px;
     padding: 5px 10px;
     font-size: 12px;

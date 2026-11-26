@@ -4,8 +4,12 @@
     <meta charset="utf-8">
     <title>Punto de Venta — Iniciar sesión</title>
     <link rel="stylesheet" href="css/estilos.css">
+    <script>(function () { if (localStorage.getItem('pos.tema') === 'oscuro') { document.documentElement.classList.add('oscuro'); } })();</script>
 </head>
 <body>
+<div class="barra-tema">
+    <button type="button" class="boton-tema" id="btn-tema">Modo oscuro</button>
+</div>
 <div class="tarjeta">
     <h1>Iniciar sesión</h1>
     <div class="tabs">
