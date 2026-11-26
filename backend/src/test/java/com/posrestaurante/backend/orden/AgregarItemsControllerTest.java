@@ -205,6 +205,18 @@ class AgregarItemsControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void cajeroCanAddItemsForVentaDirecta() throws Exception {
+        Orden orden = unaOrdenAbierta();
+        Platillo platillo = unPlatillo(true);
+
+        mockMvc.perform(post("/api/ordenes/" + orden.getId() + "/items")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.CAJERO))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"items\":[{\"platilloId\":\"" + platillo.getId() + "\",\"cantidad\":1}]}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void nonMeseroCannotAddItems() throws Exception {
         Orden orden = unaOrdenAbierta();
         Platillo platillo = unPlatillo(true);

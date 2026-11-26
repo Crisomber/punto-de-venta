@@ -481,3 +481,70 @@ input:focus, select:focus {
     opacity: .5;
     cursor: default;
 }
+
+.venta-layout {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.panel-ticket {
+    flex: 1 1 320px;
+    max-width: 380px;
+}
+
+.grid-platillos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.tarjeta-platillo {
+    background: var(--color-fondo-sutil);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border: none;
+    text-align: left;
+    font-family: inherit;
+    color: var(--color-texto);
+}
+
+.tarjeta-platillo .nombre {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.tarjeta-platillo .precio {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-acento);
+}
+
+.variantes-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.variantes-pills button {
+    background: var(--color-pill-fondo);
+    color: var(--color-pill-texto);
+    border: none;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+#tabs-categorias button {
+    flex: none;
+    white-space: nowrap;
+}

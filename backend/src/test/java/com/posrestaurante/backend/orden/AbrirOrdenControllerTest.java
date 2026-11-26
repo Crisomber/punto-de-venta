@@ -121,9 +121,21 @@ class AbrirOrdenControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void nonMeseroCannotOpenOrder() throws Exception {
+    void cajeroCanOpenOrderForVentaDirecta() throws Exception {
+        Usuario cajero = TestUsuarios.staff("Ana", Rol.CAJERO, "hash", true);
+        usuarioRepository.save(cajero);
+
         mockMvc.perform(post("/api/ordenes")
-                        .header("Authorization", "Bearer " + tokenFor(Rol.CAJERO))
+                        .header("Authorization", "Bearer " + jwtService.generateToken(cajero.getId(), "Ana", Rol.CAJERO))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"tipo\":\"PARA_LLEVAR\"}"))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void chefCannotOpenOrder() throws Exception {
+        mockMvc.perform(post("/api/ordenes")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.CHEF))
                         .contentType(APPLICATION_JSON)
                         .content("{\"tipo\":\"PARA_LLEVAR\"}"))
                 .andExpect(status().isForbidden());

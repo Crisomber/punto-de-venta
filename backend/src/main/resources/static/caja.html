@@ -19,10 +19,43 @@
     <div id="vista-pendientes">
         <div class="panel">
             <h2>Cuentas pendientes de cobro</h2>
-            <button class="boton-secundario" id="btn-actualizar" style="margin-bottom:16px">Actualizar</button>
+            <div style="display:flex;gap:8px;margin-bottom:16px">
+                <button class="boton-secundario" id="btn-actualizar">Actualizar</button>
+                <button class="boton-primario" id="btn-nueva-venta">+ Nueva venta</button>
+            </div>
             <ul class="lista-simple" id="lista-pendientes"></ul>
         </div>
         <p class="error" id="error-pendientes"></p>
+    </div>
+
+    <div id="vista-menu" class="oculto">
+        <button class="boton-secundario" id="btn-volver-menu">← Volver</button>
+        <div class="venta-layout" style="margin-top:16px">
+            <section class="panel" style="flex:999 1 560px;min-width:0">
+                <h2>Nueva venta</h2>
+                <div class="fila-form">
+                    <div style="flex:1">
+                        <label for="venta-buscar">Buscar platillo</label>
+                        <input type="text" id="venta-buscar" placeholder="Buscar…">
+                    </div>
+                </div>
+                <div class="tabs" id="tabs-categorias" style="margin-top:12px;overflow-x:auto"></div>
+                <div class="grid-platillos" id="grid-platillos" style="margin-top:16px"></div>
+            </section>
+            <aside class="panel panel-ticket">
+                <h2>Venta directa</h2>
+                <ul class="lista-simple" id="lista-ticket"></ul>
+                <p class="vacio" id="ticket-vacio">Sin platillos todavía.</p>
+                <div style="display:flex;justify-content:space-between;margin-top:12px;font-weight:700">
+                    <span>Total</span><span>$<span id="ticket-total">0.00</span></span>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:16px">
+                    <button class="boton-secundario" id="btn-cancelar-venta" style="flex:1">Cancelar</button>
+                    <button class="boton-primario" id="btn-cobrar-venta" style="flex:2" disabled>Cobrar</button>
+                </div>
+                <p class="error" id="error-venta"></p>
+            </aside>
+        </div>
     </div>
 
     <div id="vista-cobro" class="oculto">

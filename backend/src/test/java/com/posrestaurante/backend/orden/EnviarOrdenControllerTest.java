@@ -142,6 +142,15 @@ class EnviarOrdenControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void cajeroCanSendOrderForVentaDirecta() throws Exception {
+        Orden orden = unaOrdenAbiertaConItems(unPlatillo(Estacion.P1));
+
+        mockMvc.perform(post("/api/ordenes/" + orden.getId() + "/enviar")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.CAJERO)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void nonMeseroCannotSendOrder() throws Exception {
         Orden orden = unaOrdenAbiertaConItems(unPlatillo(Estacion.P1));
 
