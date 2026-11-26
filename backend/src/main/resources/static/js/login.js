@@ -32,18 +32,6 @@ async function cargarPersonal() {
     }
 }
 
-// Muestra el spinner y desactiva el boton mientras `tarea` esta en curso.
-async function conBotonCargando(boton, tarea) {
-    boton.disabled = true;
-    boton.classList.add('cargando');
-    try {
-        await tarea();
-    } finally {
-        boton.disabled = false;
-        boton.classList.remove('cargando');
-    }
-}
-
 formDueno.addEventListener('submit', async (evento) => {
     evento.preventDefault();
     const username = document.getElementById('dueno-username').value;

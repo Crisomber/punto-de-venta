@@ -13,14 +13,17 @@ async function iniciar() {
     }
     document.getElementById('nombre-usuario').textContent = sesion.nombre;
     document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
-    document.getElementById('btn-actualizar').addEventListener('click', cargarPendientes);
+    document.getElementById('btn-actualizar').addEventListener('click', () =>
+        conBotonCargando(document.getElementById('btn-actualizar'), cargarPendientes));
     document.getElementById('btn-volver').addEventListener('click', mostrarVistaPendientes);
-    document.getElementById('btn-confirmar-cobro').addEventListener('click', confirmarCobro);
+    document.getElementById('btn-confirmar-cobro').addEventListener('click', () =>
+        conBotonCargando(document.getElementById('btn-confirmar-cobro'), confirmarCobro));
     document.getElementById('btn-listo').addEventListener('click', mostrarVistaPendientes);
     document.getElementById('btn-nueva-venta').addEventListener('click', mostrarVistaMenu);
     document.getElementById('btn-volver-menu').addEventListener('click', mostrarVistaPendientes);
     document.getElementById('btn-cancelar-venta').addEventListener('click', cancelarVenta);
-    document.getElementById('btn-cobrar-venta').addEventListener('click', cobrarVentaDirecta);
+    document.getElementById('btn-cobrar-venta').addEventListener('click', () =>
+        conBotonCargando(document.getElementById('btn-cobrar-venta'), cobrarVentaDirecta));
     document.getElementById('venta-buscar').addEventListener('input', renderGridPlatillos);
 
     await cargarPendientes();
@@ -118,15 +121,19 @@ function renderGridPlatillos() {
     });
 
     for (const platillo of visibles) {
-        const tarjeta = document.createElement('div');
+        const tieneVariantes = platillo.variantes.length > 0;
+        const tarjeta = document.createElement(tieneVariantes ? 'div' : 'button');
         tarjeta.className = 'tarjeta-platillo';
+        if (!tieneVariantes) {
+            tarjeta.type = 'button';
+        }
 
         const nombre = document.createElement('p');
         nombre.className = 'nombre';
         nombre.textContent = platillo.nombre;
         tarjeta.appendChild(nombre);
 
-        if (platillo.variantes.length) {
+        if (tieneVariantes) {
             const pills = document.createElement('div');
             pills.className = 'variantes-pills';
             for (const variante of platillo.variantes) {
@@ -142,7 +149,6 @@ function renderGridPlatillos() {
             precio.className = 'precio';
             precio.textContent = '$' + platillo.precio;
             tarjeta.appendChild(precio);
-            tarjeta.style.cursor = 'pointer';
             tarjeta.addEventListener('click', () => agregarAlCarrito(platillo, null));
         }
         grid.appendChild(tarjeta);
