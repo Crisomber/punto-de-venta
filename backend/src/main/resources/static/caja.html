@@ -4,8 +4,12 @@
     <meta charset="utf-8">
     <title>Punto de Venta — Caja</title>
     <link rel="stylesheet" href="css/estilos.css">
+    <script>(function () { if (localStorage.getItem('pos.tema') === 'oscuro') { document.documentElement.classList.add('oscuro'); } })();</script>
 </head>
 <body class="app">
+<div class="barra-tema">
+    <button type="button" class="boton-tema" id="btn-tema">Modo oscuro</button>
+</div>
 <div class="app-shell">
     <div class="barra">
         <h1>Caja — <span id="nombre-usuario"></span></h1>

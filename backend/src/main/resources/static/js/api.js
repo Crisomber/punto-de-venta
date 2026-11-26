@@ -98,3 +98,41 @@ function destinoSegunRol(rol) {
         default: throw new Error('rol desconocido: ' + rol);
     }
 }
+
+// --- Modo oscuro ---
+// La clase "oscuro" vive en <html>, no en <body>: así un script minimo en el
+// <head> de cada pagina puede aplicarla antes de que el body exista, evitando
+// el parpadeo de tema incorrecto al cargar.
+const CLAVE_TEMA = 'pos.tema';
+
+function temaActual() {
+    return localStorage.getItem(CLAVE_TEMA) === 'oscuro' ? 'oscuro' : 'claro';
+}
+
+function aplicarTema(tema) {
+    document.documentElement.classList.toggle('oscuro', tema === 'oscuro');
+}
+
+function alternarTema() {
+    const nuevo = temaActual() === 'oscuro' ? 'claro' : 'oscuro';
+    localStorage.setItem(CLAVE_TEMA, nuevo);
+    aplicarTema(nuevo);
+    actualizarBotonTema();
+}
+
+function actualizarBotonTema() {
+    const boton = document.getElementById('btn-tema');
+    if (boton) {
+        boton.textContent = temaActual() === 'oscuro' ? 'Modo claro' : 'Modo oscuro';
+    }
+}
+
+function iniciarBotonTema() {
+    actualizarBotonTema();
+    const boton = document.getElementById('btn-tema');
+    if (boton) {
+        boton.addEventListener('click', alternarTema);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', iniciarBotonTema);
