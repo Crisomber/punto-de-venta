@@ -93,11 +93,20 @@ class CerrarOrdenControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void nonMeseroCannotCloseOrder() throws Exception {
+    void cajeroCanCloseOrderForVentaDirecta() throws Exception {
         Orden orden = unaOrden(EstadoOrden.ENVIADA, null);
 
         mockMvc.perform(post("/api/ordenes/" + orden.getId() + "/cerrar")
                         .header("Authorization", "Bearer " + tokenFor(Rol.CAJERO)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void chefCannotCloseOrder() throws Exception {
+        Orden orden = unaOrden(EstadoOrden.ENVIADA, null);
+
+        mockMvc.perform(post("/api/ordenes/" + orden.getId() + "/cerrar")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.CHEF)))
                 .andExpect(status().isForbidden());
     }
 
