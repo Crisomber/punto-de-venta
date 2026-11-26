@@ -32,6 +32,9 @@ class EditarPlatilloControllerTest extends AbstractIntegrationTest {
     ModificadorRepository modificadorRepository;
 
     @Autowired
+    VarianteRepository varianteRepository;
+
+    @Autowired
     JwtService jwtService;
 
     private String tokenFor(Rol rol) {
@@ -52,6 +55,32 @@ class EditarPlatilloControllerTest extends AbstractIntegrationTest {
         platillo.setEstacion(Estacion.P2);
         platillo.setActivo(true);
         return platilloRepository.save(platillo);
+    }
+
+    private Platillo unPlatilloConVariantes(Categoria categoria) {
+        Platillo platillo = new Platillo();
+        platillo.setNombre("Pizza Pastor");
+        platillo.setPrecio(null);
+        platillo.setCategoria(categoria);
+        platillo.setEstacion(Estacion.P1);
+        platillo.setActivo(true);
+        platilloRepository.save(platillo);
+
+        Variante mediana = new Variante();
+        mediana.setPlatillo(platillo);
+        mediana.setNombre("Mediana");
+        mediana.setPrecio(new BigDecimal("199.00"));
+        mediana.setOrdenIndex(0);
+        varianteRepository.save(mediana);
+
+        Variante grande = new Variante();
+        grande.setPlatillo(platillo);
+        grande.setNombre("Grande");
+        grande.setPrecio(new BigDecimal("249.00"));
+        grande.setOrdenIndex(1);
+        varianteRepository.save(grande);
+
+        return platillo;
     }
 
     @Test
@@ -119,6 +148,67 @@ class EditarPlatilloControllerTest extends AbstractIntegrationTest {
                         .content("{\"modificadorIds\":[]}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.modificadorIds.length()").value(0));
+    }
+
+    @Test
+    void duenoSwitchesPlatilloToVariantes() throws Exception {
+        Platillo platillo = unPlatillo(unaCategoria("Entradas"));
+
+        mockMvc.perform(patch("/api/platillos/" + platillo.getId())
+                        .header("Authorization", "Bearer " + tokenFor(Rol.DUENO))
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"variantes":[{"nombre":"Mediana","precio":199.00},{"nombre":"Grande","precio":249.00}]}"""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.precio").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.variantes.length()").value(2));
+    }
+
+    @Test
+    void duenoSwitchesPlatilloBackToPrecioFijo() throws Exception {
+        Platillo platillo = unPlatilloConVariantes(unaCategoria("Entradas"));
+
+        mockMvc.perform(patch("/api/platillos/" + platillo.getId())
+                        .header("Authorization", "Bearer " + tokenFor(Rol.DUENO))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"variantes\":[],\"precio\":150.00}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.precio").value(150.00))
+                .andExpect(jsonPath("$.variantes.length()").value(0));
+    }
+
+    @Test
+    void clearingVariantesWithoutProvidingPrecioFails() throws Exception {
+        Platillo platillo = unPlatilloConVariantes(unaCategoria("Entradas"));
+
+        mockMvc.perform(patch("/api/platillos/" + platillo.getId())
+                        .header("Authorization", "Bearer " + tokenFor(Rol.DUENO))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"variantes\":[]}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void settingPrecioWhileVariantesExistWithoutClearingFails() throws Exception {
+        Platillo platillo = unPlatilloConVariantes(unaCategoria("Entradas"));
+
+        mockMvc.perform(patch("/api/platillos/" + platillo.getId())
+                        .header("Authorization", "Bearer " + tokenFor(Rol.DUENO))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"precio\":50.00}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void settingBothPrecioAndNonEmptyVariantesFails() throws Exception {
+        Platillo platillo = unPlatillo(unaCategoria("Entradas"));
+
+        mockMvc.perform(patch("/api/platillos/" + platillo.getId())
+                        .header("Authorization", "Bearer " + tokenFor(Rol.DUENO))
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"precio":10.00,"variantes":[{"nombre":"A","precio":5.00},{"nombre":"B","precio":6.00}]}"""))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

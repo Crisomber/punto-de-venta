@@ -20,6 +20,8 @@ async function iniciar() {
     document.getElementById('form-categoria').addEventListener('submit', crearCategoria);
     document.getElementById('form-modificador').addEventListener('submit', crearModificador);
     document.getElementById('form-platillo').addEventListener('submit', guardarPlatillo);
+    document.getElementById('platillo-usa-variantes').addEventListener('change', alternarModoVariantes);
+    document.getElementById('btn-agregar-variante').addEventListener('click', () => agregarFilaVariante());
     document.getElementById('btn-cancelar-edicion').addEventListener('click', cancelarEdicionPlatillo);
     document.getElementById('usuario-rol').addEventListener('change', actualizarVisibilidadEstacion);
     document.getElementById('form-usuario').addEventListener('submit', crearUsuario);
@@ -201,8 +203,11 @@ function renderPlatillos(platillos) {
         const li = document.createElement('li');
         li.className = 'fila-lista';
 
+        const precioTexto = platillo.variantes.length
+            ? platillo.variantes.map((v) => v.nombre + ' $' + v.precio).join(' / ')
+            : '$' + platillo.precio;
         const texto = document.createElement('span');
-        texto.textContent = platillo.nombre + ' — $' + platillo.precio + ' — ' + platillo.categoriaNombre +
+        texto.textContent = platillo.nombre + ' — ' + precioTexto + ' — ' + platillo.categoriaNombre +
             ' — ' + platillo.estacion;
 
         const acciones = document.createElement('div');
@@ -240,10 +245,23 @@ function cargarPlatilloEnFormulario(platillo) {
     editandoPlatilloId = platillo.id;
     document.getElementById('titulo-form-platillo').textContent = 'Editar platillo';
     document.getElementById('platillo-nombre').value = platillo.nombre;
-    document.getElementById('platillo-precio').value = platillo.precio;
     document.getElementById('platillo-categoria').value = platillo.categoriaId;
     document.getElementById('platillo-estacion').value = platillo.estacion;
     renderCheckboxesModificadores([...platillo.modificadorIds]);
+
+    document.getElementById('filas-variantes').innerHTML = '';
+    if (platillo.variantes.length) {
+        document.getElementById('platillo-usa-variantes').checked = true;
+        for (const variante of platillo.variantes) {
+            agregarFilaVariante(variante.nombre, variante.precio);
+        }
+        document.getElementById('platillo-precio').value = '';
+    } else {
+        document.getElementById('platillo-usa-variantes').checked = false;
+        document.getElementById('platillo-precio').value = platillo.precio;
+    }
+    alternarModoVariantes();
+
     document.getElementById('btn-guardar-platillo').textContent = 'Guardar cambios';
     document.getElementById('btn-cancelar-edicion').classList.remove('oculto');
     document.getElementById('form-platillo').scrollIntoView({ behavior: 'smooth' });
@@ -254,8 +272,53 @@ function cancelarEdicionPlatillo() {
     document.getElementById('titulo-form-platillo').textContent = 'Nuevo platillo';
     document.getElementById('form-platillo').reset();
     renderCheckboxesModificadores([]);
+    document.getElementById('filas-variantes').innerHTML = '';
+    alternarModoVariantes();
     document.getElementById('btn-guardar-platillo').textContent = 'Crear platillo';
     document.getElementById('btn-cancelar-edicion').classList.add('oculto');
+}
+
+function alternarModoVariantes() {
+    const usaVariantes = document.getElementById('platillo-usa-variantes').checked;
+    document.getElementById('campo-precio').classList.toggle('oculto', usaVariantes);
+    document.getElementById('bloque-variantes').classList.toggle('oculto', !usaVariantes);
+    if (usaVariantes && document.getElementById('filas-variantes').children.length === 0) {
+        agregarFilaVariante();
+        agregarFilaVariante();
+    }
+}
+
+function agregarFilaVariante(nombre, precio) {
+    const contenedor = document.getElementById('filas-variantes');
+    const fila = document.createElement('div');
+    fila.style.cssText = 'display:flex;gap:8px;align-items:center';
+
+    const inputNombre = document.createElement('input');
+    inputNombre.type = 'text';
+    inputNombre.placeholder = 'Nombre (ej. Grande)';
+    inputNombre.className = 'variante-nombre';
+    inputNombre.style.flex = '1';
+    inputNombre.value = nombre || '';
+
+    const inputPrecio = document.createElement('input');
+    inputPrecio.type = 'number';
+    inputPrecio.step = '0.01';
+    inputPrecio.min = '0.01';
+    inputPrecio.placeholder = 'Precio';
+    inputPrecio.className = 'variante-precio';
+    inputPrecio.style.width = '100px';
+    inputPrecio.value = precio ?? '';
+
+    const btnQuitar = document.createElement('button');
+    btnQuitar.type = 'button';
+    btnQuitar.className = 'boton-mini';
+    btnQuitar.textContent = 'Quitar';
+    btnQuitar.addEventListener('click', () => fila.remove());
+
+    fila.appendChild(inputNombre);
+    fila.appendChild(inputPrecio);
+    fila.appendChild(btnQuitar);
+    contenedor.appendChild(fila);
 }
 
 async function guardarPlatillo(evento) {
@@ -263,14 +326,23 @@ async function guardarPlatillo(evento) {
     const error = document.getElementById('error-platillo');
     error.textContent = '';
 
+    const usaVariantes = document.getElementById('platillo-usa-variantes').checked;
     const cuerpo = {
         nombre: document.getElementById('platillo-nombre').value,
-        precio: parseFloat(document.getElementById('platillo-precio').value),
         categoriaId: document.getElementById('platillo-categoria').value,
         estacion: document.getElementById('platillo-estacion').value,
         modificadorIds: [...document.querySelectorAll('#checkboxes-mod-platillo input:checked')]
             .map((c) => c.value),
     };
+    if (usaVariantes) {
+        cuerpo.variantes = [...document.querySelectorAll('#filas-variantes > div')].map((fila) => ({
+            nombre: fila.querySelector('.variante-nombre').value.trim(),
+            precio: parseFloat(fila.querySelector('.variante-precio').value),
+        }));
+    } else {
+        cuerpo.precio = parseFloat(document.getElementById('platillo-precio').value);
+        cuerpo.variantes = [];
+    }
 
     try {
         if (editandoPlatilloId) {

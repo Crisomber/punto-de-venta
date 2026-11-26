@@ -81,7 +81,7 @@
                         <label for="platillo-nombre">Nombre</label>
                         <input type="text" id="platillo-nombre">
                     </div>
-                    <div>
+                    <div id="campo-precio">
                         <label for="platillo-precio">Precio</label>
                         <input type="number" id="platillo-precio" step="0.01" min="0.01" style="width:110px">
                     </div>
@@ -96,6 +96,14 @@
                             <option value="P2">P2</option>
                         </select>
                     </div>
+                </div>
+                <label style="display:flex;align-items:center;gap:6px;margin-top:12px;margin-bottom:0">
+                    <input type="checkbox" id="platillo-usa-variantes" style="width:auto">
+                    <span>Usar variantes de tamaño (ej. pizzas, alitas)</span>
+                </label>
+                <div id="bloque-variantes" class="oculto" style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+                    <div id="filas-variantes" style="display:flex;flex-direction:column;gap:8px"></div>
+                    <button type="button" class="boton-mini" id="btn-agregar-variante" style="align-self:flex-start">+ Agregar variante</button>
                 </div>
                 <div class="checkboxes-mod" id="checkboxes-mod-platillo" style="margin-top:12px"></div>
                 <div style="margin-top:12px;display:flex;gap:8px">

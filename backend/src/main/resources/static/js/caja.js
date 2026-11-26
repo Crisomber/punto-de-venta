@@ -76,8 +76,9 @@ function mostrarCobro(orden) {
     for (const item of orden.items) {
         const li = document.createElement('li');
         li.className = 'fila-lista';
+        const variante = item.varianteNombre ? ' (' + item.varianteNombre + ')' : '';
         const mods = item.modificadorNombres.length ? ' (' + item.modificadorNombres.join(', ') + ')' : '';
-        li.innerHTML = '<span>' + item.cantidad + 'x ' + item.platilloNombre + mods + '</span><span>$' +
+        li.innerHTML = '<span>' + item.cantidad + 'x ' + item.platilloNombre + variante + mods + '</span><span>$' +
             (item.precioUnitario * item.cantidad).toFixed(2) + '</span>';
         lista.appendChild(li);
     }
@@ -109,8 +110,9 @@ function mostrarRecibo(recibo) {
     for (const item of recibo.items) {
         const li = document.createElement('li');
         li.className = 'fila-lista';
+        const variante = item.varianteNombre ? ' (' + item.varianteNombre + ')' : '';
         const mods = item.modificadorNombres.length ? ' (' + item.modificadorNombres.join(', ') + ')' : '';
-        li.innerHTML = '<span>' + item.cantidad + 'x ' + item.platilloNombre + mods + '</span>';
+        li.innerHTML = '<span>' + item.cantidad + 'x ' + item.platilloNombre + variante + mods + '</span>';
         lista.appendChild(li);
     }
 
