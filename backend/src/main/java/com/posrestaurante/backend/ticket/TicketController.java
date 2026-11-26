@@ -64,7 +64,8 @@ public class TicketController {
         Set<UUID> modIds = item.getModificadores().stream().map(Modificador::getId).collect(Collectors.toSet());
         Set<String> modNombres = item.getModificadores().stream().map(Modificador::getNombre).collect(Collectors.toSet());
         return new OrdenItemResponse(item.getId(), item.getPlatillo().getId(), item.getPlatillo().getNombre(),
-                item.getCantidad(), item.getPrecioUnitario(), item.getEstado(), modIds, modNombres);
+                item.getCantidad(), item.getPrecioUnitario(), item.getVarianteNombre(), item.getEstado(),
+                modIds, modNombres);
     }
 
 }

@@ -63,9 +63,10 @@ function renderItem(item) {
     const fila = document.createElement('div');
     fila.className = 'item-fila';
 
+    const variante = item.varianteNombre ? ' (' + item.varianteNombre + ')' : '';
     const mods = item.modificadorNombres.length ? ' (' + item.modificadorNombres.join(', ') + ')' : '';
     const texto = document.createElement('span');
-    texto.textContent = item.cantidad + 'x ' + item.platilloNombre + mods;
+    texto.textContent = item.cantidad + 'x ' + item.platilloNombre + variante + mods;
 
     const acciones = document.createElement('div');
     acciones.className = 'item-acciones';

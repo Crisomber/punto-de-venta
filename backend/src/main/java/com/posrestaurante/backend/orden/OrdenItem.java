@@ -44,6 +44,7 @@ public class OrdenItem {
 
     private int cantidad;
     private BigDecimal precioUnitario;
+    private String varianteNombre;
 
     @Enumerated(EnumType.STRING)
     private EstadoOrdenItem estado;

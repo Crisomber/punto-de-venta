@@ -12,7 +12,10 @@ async function iniciar() {
     document.getElementById('btn-salir').addEventListener('click', cerrarSesion);
     document.getElementById('btn-volver').addEventListener('click', mostrarVistaMesas);
     document.getElementById('btn-nueva-para-llevar').addEventListener('click', crearOrdenParaLlevar);
-    document.getElementById('select-platillo').addEventListener('change', renderModificadoresDisponibles);
+    document.getElementById('select-platillo').addEventListener('change', () => {
+        renderModificadoresDisponibles();
+        renderVarianteDisponible();
+    });
     document.getElementById('form-agregar-item').addEventListener('submit', agregarItem);
     document.getElementById('btn-enviar').addEventListener('click', enviarOrden);
     document.getElementById('btn-cerrar').addEventListener('click', cerrarCuenta);
@@ -33,10 +36,31 @@ function llenarSelectPlatillos() {
     for (const platillo of platillos) {
         const opcion = document.createElement('option');
         opcion.value = platillo.id;
-        opcion.textContent = platillo.nombre + ' — $' + platillo.precio + ' (' + platillo.categoriaNombre + ')';
+        const precioTexto = platillo.variantes.length ? 'variantes' : '$' + platillo.precio;
+        opcion.textContent = platillo.nombre + ' — ' + precioTexto + ' (' + platillo.categoriaNombre + ')';
         select.appendChild(opcion);
     }
     renderModificadoresDisponibles();
+    renderVarianteDisponible();
+}
+
+function renderVarianteDisponible() {
+    const contenedor = document.getElementById('selector-variante');
+    const select = document.getElementById('select-variante');
+    select.innerHTML = '';
+    const platilloId = document.getElementById('select-platillo').value;
+    const platillo = platillos.find((p) => p.id === platilloId);
+    if (!platillo || !platillo.variantes.length) {
+        contenedor.classList.add('oculto');
+        return;
+    }
+    contenedor.classList.remove('oculto');
+    for (const variante of platillo.variantes) {
+        const opcion = document.createElement('option');
+        opcion.value = variante.id;
+        opcion.textContent = variante.nombre + ' — $' + variante.precio;
+        select.appendChild(opcion);
+    }
 }
 
 function renderModificadoresDisponibles() {
@@ -161,8 +185,9 @@ function renderOrden(orden) {
     for (const item of orden.items) {
         const li = document.createElement('li');
         li.className = 'fila-lista';
+        const variante = item.varianteNombre ? ' (' + item.varianteNombre + ')' : '';
         const mods = item.modificadorNombres.length ? ' (' + item.modificadorNombres.join(', ') + ')' : '';
-        li.innerHTML = '<span>' + item.cantidad + 'x ' + item.platilloNombre + mods +
+        li.innerHTML = '<span>' + item.cantidad + 'x ' + item.platilloNombre + variante + mods +
             '</span><span class="estado-pill">' + item.estado + '</span>';
         lista.appendChild(li);
     }
@@ -184,9 +209,14 @@ async function agregarItem(evento) {
         .map((casilla) => casilla.value);
     const error = document.getElementById('error-agregar');
     error.textContent = '';
+    const item = { platilloId, cantidad, modificadorIds };
+    const platillo = platillos.find((p) => p.id === platilloId);
+    if (platillo && platillo.variantes.length) {
+        item.varianteId = document.getElementById('select-variante').value;
+    }
     try {
         await apiPostAuth('/api/ordenes/' + ordenActualId + '/items', {
-            items: [{ platilloId, cantidad, modificadorIds }],
+            items: [item],
         });
         await refrescarOrden();
     } catch (e) {

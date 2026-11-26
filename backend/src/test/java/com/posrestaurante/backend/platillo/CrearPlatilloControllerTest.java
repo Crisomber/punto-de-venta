@@ -129,6 +129,94 @@ class CrearPlatilloControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void duenoCreatesPlatilloWithVariantes() throws Exception {
+        Categoria categoria = unaCategoria();
+
+        mockMvc.perform(post("/api/platillos")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.DUENO))
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"nombre":"Pizza Pastor","categoriaId":"%s","estacion":"P1",
+                                 "variantes":[{"nombre":"Mediana","precio":199.00},{"nombre":"Grande","precio":249.00}]}"""
+                                .formatted(categoria.getId())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.precio").value(org.hamcrest.Matchers.nullValue()))
+                .andExpect(jsonPath("$.variantes.length()").value(2))
+                .andExpect(jsonPath("$.variantes[0].nombre").value("Mediana"))
+                .andExpect(jsonPath("$.variantes[0].precio").value(199.00))
+                .andExpect(jsonPath("$.variantes[1].nombre").value("Grande"));
+    }
+
+    @Test
+    void creatingPlatilloWithBothPrecioAndVariantesFails() throws Exception {
+        Categoria categoria = unaCategoria();
+
+        mockMvc.perform(post("/api/platillos")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.DUENO))
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"nombre":"Pizza","precio":100.00,"categoriaId":"%s","estacion":"P1",
+                                 "variantes":[{"nombre":"Mediana","precio":199.00},{"nombre":"Grande","precio":249.00}]}"""
+                                .formatted(categoria.getId())))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void creatingPlatilloWithNeitherPrecioNorVariantesFails() throws Exception {
+        Categoria categoria = unaCategoria();
+
+        mockMvc.perform(post("/api/platillos")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.DUENO))
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"nombre":"Pizza","categoriaId":"%s","estacion":"P1"}"""
+                                .formatted(categoria.getId())))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void creatingPlatilloWithOnlyOneVarianteFails() throws Exception {
+        Categoria categoria = unaCategoria();
+
+        mockMvc.perform(post("/api/platillos")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.DUENO))
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"nombre":"Pizza","categoriaId":"%s","estacion":"P1",
+                                 "variantes":[{"nombre":"Mediana","precio":199.00}]}"""
+                                .formatted(categoria.getId())))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void creatingPlatilloWithDuplicateVarianteNombresFails() throws Exception {
+        Categoria categoria = unaCategoria();
+
+        mockMvc.perform(post("/api/platillos")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.DUENO))
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"nombre":"Pizza","categoriaId":"%s","estacion":"P1",
+                                 "variantes":[{"nombre":"Mediana","precio":199.00},{"nombre":"mediana","precio":249.00}]}"""
+                                .formatted(categoria.getId())))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void creatingPlatilloWithNonPositiveVariantePrecioFails() throws Exception {
+        Categoria categoria = unaCategoria();
+
+        mockMvc.perform(post("/api/platillos")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.DUENO))
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"nombre":"Pizza","categoriaId":"%s","estacion":"P1",
+                                 "variantes":[{"nombre":"Mediana","precio":0},{"nombre":"Grande","precio":249.00}]}"""
+                                .formatted(categoria.getId())))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void nonDuenoCannotCreatePlatillo() throws Exception {
         Categoria categoria = unaCategoria();
 

@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public record AgregarItemsRequest(List<ItemRequest> items) {
 
-    public record ItemRequest(UUID platilloId, Integer cantidad, Set<UUID> modificadorIds) {
+    public record ItemRequest(UUID platilloId, Integer cantidad, Set<UUID> modificadorIds, UUID varianteId) {
     }
 
 }

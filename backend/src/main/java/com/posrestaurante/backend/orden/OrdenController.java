@@ -12,6 +12,8 @@ import com.posrestaurante.backend.orden.dto.OrdenItemResponse;
 import com.posrestaurante.backend.orden.dto.OrdenResponse;
 import com.posrestaurante.backend.platillo.Platillo;
 import com.posrestaurante.backend.platillo.PlatilloRepository;
+import com.posrestaurante.backend.platillo.Variante;
+import com.posrestaurante.backend.platillo.VarianteRepository;
 import com.posrestaurante.backend.security.AuthenticatedUser;
 import com.posrestaurante.backend.ticket.Ticket;
 import com.posrestaurante.backend.ticket.TicketEstado;
@@ -32,6 +34,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,16 +54,19 @@ public class OrdenController {
     private final MesaRepository mesaRepository;
     private final UsuarioRepository usuarioRepository;
     private final PlatilloRepository platilloRepository;
+    private final VarianteRepository varianteRepository;
     private final TicketRepository ticketRepository;
 
     public OrdenController(OrdenRepository ordenRepository, OrdenItemRepository ordenItemRepository,
                             MesaRepository mesaRepository, UsuarioRepository usuarioRepository,
-                            PlatilloRepository platilloRepository, TicketRepository ticketRepository) {
+                            PlatilloRepository platilloRepository, VarianteRepository varianteRepository,
+                            TicketRepository ticketRepository) {
         this.ordenRepository = ordenRepository;
         this.ordenItemRepository = ordenItemRepository;
         this.mesaRepository = mesaRepository;
         this.usuarioRepository = usuarioRepository;
         this.platilloRepository = platilloRepository;
+        this.varianteRepository = varianteRepository;
         this.ticketRepository = ticketRepository;
     }
 
@@ -149,11 +155,32 @@ public class OrdenController {
                 .filter(m -> modificadorIds.contains(m.getId()))
                 .collect(Collectors.toSet());
 
+        List<Variante> variantes = varianteRepository.findByPlatilloIdOrderByOrdenIndexAsc(platillo.getId());
+        BigDecimal precioUnitario;
+        String varianteNombre = null;
+        if (!variantes.isEmpty()) {
+            if (itemRequest.varianteId() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "variante requerida para este platillo");
+            }
+            Variante variante = variantes.stream()
+                    .filter(v -> v.getId().equals(itemRequest.varianteId()))
+                    .findFirst()
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "variante invalida"));
+            precioUnitario = variante.getPrecio();
+            varianteNombre = variante.getNombre();
+        } else {
+            if (itemRequest.varianteId() != null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "este platillo no tiene variantes");
+            }
+            precioUnitario = platillo.getPrecio();
+        }
+
         OrdenItem item = new OrdenItem();
         item.setOrden(orden);
         item.setPlatillo(platillo);
         item.setCantidad(itemRequest.cantidad());
-        item.setPrecioUnitario(platillo.getPrecio());
+        item.setPrecioUnitario(precioUnitario);
+        item.setVarianteNombre(varianteNombre);
         item.setEstado(EstadoOrdenItem.PENDIENTE);
         item.setModificadores(modificadores);
         return ordenItemRepository.save(item);
@@ -257,7 +284,8 @@ public class OrdenController {
         Set<UUID> modIds = item.getModificadores().stream().map(Modificador::getId).collect(Collectors.toSet());
         Set<String> modNombres = item.getModificadores().stream().map(Modificador::getNombre).collect(Collectors.toSet());
         return new OrdenItemResponse(item.getId(), item.getPlatillo().getId(), item.getPlatillo().getNombre(),
-                item.getCantidad(), item.getPrecioUnitario(), item.getEstado(), modIds, modNombres);
+                item.getCantidad(), item.getPrecioUnitario(), item.getVarianteNombre(), item.getEstado(),
+                modIds, modNombres);
     }
 
     private OrdenResponse toResponse(Orden orden, List<OrdenItemResponse> items) {

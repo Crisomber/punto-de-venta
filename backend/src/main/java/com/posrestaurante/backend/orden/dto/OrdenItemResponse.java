@@ -7,6 +7,6 @@ import java.util.Set;
 import java.util.UUID;
 
 public record OrdenItemResponse(UUID id, UUID platilloId, String platilloNombre, int cantidad,
-                                 BigDecimal precioUnitario, EstadoOrdenItem estado, Set<UUID> modificadorIds,
-                                 Set<String> modificadorNombres) {
+                                 BigDecimal precioUnitario, String varianteNombre, EstadoOrdenItem estado,
+                                 Set<UUID> modificadorIds, Set<String> modificadorNombres) {
 }

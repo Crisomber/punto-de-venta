@@ -6,6 +6,8 @@ import com.posrestaurante.backend.modificador.Modificador;
 import com.posrestaurante.backend.modificador.ModificadorRepository;
 import com.posrestaurante.backend.platillo.Platillo;
 import com.posrestaurante.backend.platillo.PlatilloRepository;
+import com.posrestaurante.backend.platillo.Variante;
+import com.posrestaurante.backend.platillo.VarianteRepository;
 import com.posrestaurante.backend.security.JwtService;
 import com.posrestaurante.backend.testsupport.AbstractIntegrationTest;
 import com.posrestaurante.backend.testsupport.TestUsuarios;
@@ -47,6 +49,9 @@ class AgregarItemsControllerTest extends AbstractIntegrationTest {
     ModificadorRepository modificadorRepository;
 
     @Autowired
+    VarianteRepository varianteRepository;
+
+    @Autowired
     UsuarioRepository usuarioRepository;
 
     @Autowired
@@ -83,6 +88,36 @@ class AgregarItemsControllerTest extends AbstractIntegrationTest {
         platillo.setActivo(activo);
         platillo.setModificadores(new HashSet<>(java.util.List.of(modificadoresPermitidos)));
         return platilloRepository.save(platillo);
+    }
+
+    private Platillo unPlatilloConVariantes() {
+        Categoria categoria = new Categoria();
+        categoria.setNombre("Pizzas");
+        categoriaRepository.save(categoria);
+
+        Platillo platillo = new Platillo();
+        platillo.setNombre("Pizza Pastor");
+        platillo.setPrecio(null);
+        platillo.setCategoria(categoria);
+        platillo.setEstacion(Estacion.P1);
+        platillo.setActivo(true);
+        platilloRepository.save(platillo);
+
+        Variante mediana = new Variante();
+        mediana.setPlatillo(platillo);
+        mediana.setNombre("Mediana");
+        mediana.setPrecio(new BigDecimal("199.00"));
+        mediana.setOrdenIndex(0);
+        varianteRepository.save(mediana);
+
+        Variante grande = new Variante();
+        grande.setPlatillo(platillo);
+        grande.setNombre("Grande");
+        grande.setPrecio(new BigDecimal("249.00"));
+        grande.setOrdenIndex(1);
+        varianteRepository.save(grande);
+
+        return platillo;
     }
 
     @Test
@@ -244,6 +279,62 @@ class AgregarItemsControllerTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk());
 
         assertThat(ticketRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    void addingItemWithVarianteUsesItsPrecioAndSnapshotsName() throws Exception {
+        Orden orden = unaOrdenAbierta();
+        Platillo platillo = unPlatilloConVariantes();
+        Variante grande = varianteRepository.findByPlatilloIdOrderByOrdenIndexAsc(platillo.getId()).get(1);
+
+        mockMvc.perform(post("/api/ordenes/" + orden.getId() + "/items")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.MESERO))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"items\":[{\"platilloId\":\"" + platillo.getId()
+                                + "\",\"cantidad\":1,\"varianteId\":\"" + grande.getId() + "\"}]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].precioUnitario").value(249.00))
+                .andExpect(jsonPath("$.items[0].varianteNombre").value("Grande"));
+    }
+
+    @Test
+    void addingItemWithoutVarianteWhenPlatilloRequiresOneFails() throws Exception {
+        Orden orden = unaOrdenAbierta();
+        Platillo platillo = unPlatilloConVariantes();
+
+        mockMvc.perform(post("/api/ordenes/" + orden.getId() + "/items")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.MESERO))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"items\":[{\"platilloId\":\"" + platillo.getId() + "\",\"cantidad\":1}]}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void addingItemWithVarianteIdForFlatPricedPlatilloFails() throws Exception {
+        Orden orden = unaOrdenAbierta();
+        Platillo platillo = unPlatillo(true);
+
+        mockMvc.perform(post("/api/ordenes/" + orden.getId() + "/items")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.MESERO))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"items\":[{\"platilloId\":\"" + platillo.getId()
+                                + "\",\"cantidad\":1,\"varianteId\":\"" + UUID.randomUUID() + "\"}]}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void addingItemWithVarianteFromAnotherPlatilloFails() throws Exception {
+        Orden orden = unaOrdenAbierta();
+        Platillo platilloA = unPlatilloConVariantes();
+        Platillo platilloB = unPlatilloConVariantes();
+        Variante varianteDeB = varianteRepository.findByPlatilloIdOrderByOrdenIndexAsc(platilloB.getId()).get(0);
+
+        mockMvc.perform(post("/api/ordenes/" + orden.getId() + "/items")
+                        .header("Authorization", "Bearer " + tokenFor(Rol.MESERO))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"items\":[{\"platilloId\":\"" + platilloA.getId()
+                                + "\",\"cantidad\":1,\"varianteId\":\"" + varianteDeB.getId() + "\"}]}"))
+                .andExpect(status().isBadRequest());
     }
 
 }

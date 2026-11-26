@@ -8,6 +8,8 @@ import com.posrestaurante.backend.platillo.dto.ActivarPlatilloRequest;
 import com.posrestaurante.backend.platillo.dto.CrearPlatilloRequest;
 import com.posrestaurante.backend.platillo.dto.EditarPlatilloRequest;
 import com.posrestaurante.backend.platillo.dto.PlatilloResponse;
+import com.posrestaurante.backend.platillo.dto.VarianteRequest;
+import com.posrestaurante.backend.platillo.dto.VarianteResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,13 +38,16 @@ public class PlatilloController {
     private final PlatilloRepository platilloRepository;
     private final CategoriaRepository categoriaRepository;
     private final ModificadorRepository modificadorRepository;
+    private final VarianteRepository varianteRepository;
 
     public PlatilloController(PlatilloRepository platilloRepository,
                                CategoriaRepository categoriaRepository,
-                               ModificadorRepository modificadorRepository) {
+                               ModificadorRepository modificadorRepository,
+                               VarianteRepository varianteRepository) {
         this.platilloRepository = platilloRepository;
         this.categoriaRepository = categoriaRepository;
         this.modificadorRepository = modificadorRepository;
+        this.varianteRepository = varianteRepository;
     }
 
     @PostMapping
@@ -49,9 +55,6 @@ public class PlatilloController {
     public PlatilloResponse crearPlatillo(@RequestBody CrearPlatilloRequest request) {
         if (request.nombre() == null || request.nombre().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "nombre requerido");
-        }
-        if (request.precio() == null || request.precio().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "precio debe ser positivo");
         }
         if (request.estacion() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "estacion requerida");
@@ -62,6 +65,22 @@ public class PlatilloController {
         Categoria categoria = categoriaRepository.findById(request.categoriaId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "categoria invalida"));
 
+        boolean tieneVariantes = request.variantes() != null && !request.variantes().isEmpty();
+        boolean tienePrecio = request.precio() != null;
+        if (tieneVariantes && tienePrecio) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "no se puede fijar precio y variantes de tamano a la vez");
+        }
+        if (!tieneVariantes && !tienePrecio) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "precio o variantes requerido");
+        }
+        if (tienePrecio) {
+            validarPrecio(request.precio());
+        }
+        if (tieneVariantes) {
+            validarVariantes(request.variantes());
+        }
+
         Set<UUID> modificadorIds = request.modificadorIds() == null ? Set.of() : request.modificadorIds();
         Set<Modificador> modificadores = new HashSet<>(modificadorRepository.findAllById(modificadorIds));
         if (modificadores.size() != modificadorIds.size()) {
@@ -71,12 +90,16 @@ public class PlatilloController {
         Platillo platillo = new Platillo();
         platillo.setNombre(request.nombre());
         platillo.setDescripcion(request.descripcion());
-        platillo.setPrecio(request.precio());
+        platillo.setPrecio(tieneVariantes ? null : request.precio());
         platillo.setCategoria(categoria);
         platillo.setEstacion(request.estacion());
         platillo.setModificadores(modificadores);
         platillo.setActivo(true);
         platilloRepository.save(platillo);
+
+        if (tieneVariantes) {
+            guardarVariantes(platillo, request.variantes());
+        }
 
         return toResponse(platillo);
     }
@@ -112,12 +135,6 @@ public class PlatilloController {
         if (request.descripcion() != null) {
             platillo.setDescripcion(request.descripcion());
         }
-        if (request.precio() != null) {
-            if (request.precio().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "precio debe ser positivo");
-            }
-            platillo.setPrecio(request.precio());
-        }
         if (request.categoriaId() != null) {
             Categoria categoria = categoriaRepository.findById(request.categoriaId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "categoria invalida"));
@@ -134,17 +151,91 @@ public class PlatilloController {
             platillo.setModificadores(modificadores);
         }
 
+        boolean variantesEnviadas = request.variantes() != null;
+        boolean variantesVacias = variantesEnviadas && request.variantes().isEmpty();
+        boolean variantesNuevas = variantesEnviadas && !request.variantes().isEmpty();
+
+        if (request.precio() != null && variantesNuevas) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "no se puede fijar precio y variantes de tamano a la vez");
+        }
+
+        if (request.precio() != null) {
+            boolean tieneVariantesActuales = !varianteRepository.findByPlatilloIdOrderByOrdenIndexAsc(id).isEmpty();
+            if (tieneVariantesActuales && !variantesVacias) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "el platillo usa variantes; incluye variantes: [] para quitarlas antes de fijar un precio");
+            }
+            validarPrecio(request.precio());
+            platillo.setPrecio(request.precio());
+        }
+
+        if (variantesVacias) {
+            if (request.precio() == null && platillo.getPrecio() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "se requiere un precio al quitar las variantes");
+            }
+            varianteRepository.deleteByPlatilloId(id);
+        }
+
+        if (variantesNuevas) {
+            validarVariantes(request.variantes());
+            platillo.setPrecio(null);
+            varianteRepository.deleteByPlatilloId(id);
+            platilloRepository.save(platillo);
+            guardarVariantes(platillo, request.variantes());
+        }
+
         platilloRepository.save(platillo);
         return toResponse(platillo);
+    }
+
+    private void validarPrecio(BigDecimal precio) {
+        if (precio.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "precio debe ser positivo");
+        }
+    }
+
+    private void validarVariantes(List<VarianteRequest> variantes) {
+        if (variantes.size() < 2) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "se requieren al menos 2 variantes");
+        }
+        Set<String> nombresVistos = new HashSet<>();
+        for (VarianteRequest variante : variantes) {
+            if (variante.nombre() == null || variante.nombre().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "nombre de variante requerido");
+            }
+            if (variante.precio() == null || variante.precio().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "precio de variante debe ser positivo");
+            }
+            if (!nombresVistos.add(variante.nombre().trim().toLowerCase())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "nombres de variante duplicados");
+            }
+        }
+    }
+
+    private void guardarVariantes(Platillo platillo, List<VarianteRequest> variantes) {
+        int indice = 0;
+        for (VarianteRequest variante : variantes) {
+            Variante nueva = new Variante();
+            nueva.setPlatillo(platillo);
+            nueva.setNombre(variante.nombre());
+            nueva.setPrecio(variante.precio());
+            nueva.setOrdenIndex(indice++);
+            varianteRepository.save(nueva);
+        }
     }
 
     private PlatilloResponse toResponse(Platillo platillo) {
         Set<UUID> modificadorIds = platillo.getModificadores().stream()
                 .map(Modificador::getId)
                 .collect(Collectors.toSet());
+        List<VarianteResponse> variantes = varianteRepository.findByPlatilloIdOrderByOrdenIndexAsc(platillo.getId())
+                .stream()
+                .map(v -> new VarianteResponse(v.getId(), v.getNombre(), v.getPrecio()))
+                .collect(Collectors.toCollection(ArrayList::new));
         return new PlatilloResponse(platillo.getId(), platillo.getNombre(), platillo.getDescripcion(),
                 platillo.getPrecio(), platillo.getCategoria().getId(), platillo.getCategoria().getNombre(),
-                platillo.getEstacion(), modificadorIds, platillo.isActivo());
+                platillo.getEstacion(), modificadorIds, platillo.isActivo(), variantes);
     }
 
 }
