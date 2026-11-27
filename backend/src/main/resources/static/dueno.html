@@ -101,9 +101,11 @@
                     <input type="checkbox" id="platillo-usa-variantes" style="width:auto">
                     <span>Usar variantes de tamaño (ej. pizzas, alitas)</span>
                 </label>
-                <div id="bloque-variantes" class="oculto" style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+                <div id="bloque-variantes" class="oculto" style="margin-top:8px">
+                  <div style="display:flex;flex-direction:column;gap:8px">
                     <div id="filas-variantes" style="display:flex;flex-direction:column;gap:8px"></div>
                     <button type="button" class="boton-mini" id="btn-agregar-variante" style="align-self:flex-start">+ Agregar variante</button>
+                  </div>
                 </div>
                 <div class="checkboxes-mod" id="checkboxes-mod-platillo" style="margin-top:12px"></div>
                 <div style="margin-top:12px;display:flex;gap:8px">
@@ -171,7 +173,8 @@
     </div>
 
     <!-- REPORTES -->
-    <div id="vista-reportes" class="oculto" style="margin-top:20px;display:flex;flex-direction:column;gap:16px">
+    <div id="vista-reportes" class="oculto" style="margin-top:20px">
+      <div style="display:flex;flex-direction:column;gap:16px">
 
         <div class="panel" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
             <div>
@@ -196,7 +199,8 @@
             <div id="grid-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px"></div>
         </div>
 
-        <div class="oculto" id="fila-graficas" style="display:flex;gap:16px;flex-wrap:wrap">
+        <div class="oculto" id="fila-graficas">
+          <div style="display:flex;gap:16px;flex-wrap:wrap">
             <div class="panel" style="flex:2 1 420px;min-width:0">
                 <h2 style="margin:0 0 16px">Ingresos por día (últimos 7 días)</h2>
                 <div id="grafica-ingresos" style="display:flex;align-items:flex-end;gap:12px;height:160px"></div>
@@ -205,6 +209,7 @@
                 <h2 style="margin:0 0 16px">Efectivo vs. Tarjeta</h2>
                 <div id="grafica-metodo" style="display:flex;align-items:center;gap:20px"></div>
             </div>
+          </div>
         </div>
 
         <div class="panel oculto" id="panel-ranking">
@@ -217,6 +222,7 @@
             <p class="vacio" id="tickets-info" style="margin:0 0 16px"></p>
             <div id="grid-tickets" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px"></div>
         </div>
+      </div>
     </div>
 </div>
 <script src="js/api.js"></script>

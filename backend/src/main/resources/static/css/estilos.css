@@ -335,8 +335,11 @@ form {
     text-align: left;
 }
 
+/* !important a proposito: "oculto" es la clase que fuerza que algo no se vea,
+   sin importar que otra regla (un estilo en linea, un selector mas especifico
+   como ".fila-form > div") tambien le ponga display a ese mismo elemento. */
 .oculto {
-    display: none;
+    display: none !important;
 }
 
 label {
