@@ -422,13 +422,19 @@ input:focus, select:focus {
     color: var(--color-texto);
 }
 
-/* Pequena animacion de "presionado" en cualquier boton de la app. */
+/* Pequena animacion al pasar el mouse y al presionar, en cualquier boton de la app. */
 button {
-    transition: transform .08s ease;
+    transition: transform .08s ease, box-shadow .15s ease;
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, .1);
 }
 
 button:active:not(:disabled) {
     transform: scale(.96);
+    box-shadow: none;
 }
 
 /* Spinner universal: no requiere marcado adicional en el boton. El texto se
@@ -578,6 +584,7 @@ button.tarjeta-platillo {
     width: 100%;
     background: var(--color-pill-fondo);
     border-radius: 6px 6px 0 0;
+    transition: height .6s cubic-bezier(.22, 1, .36, 1);
 }
 
 .barra-dia.hoy .relleno {
@@ -618,6 +625,7 @@ button.tarjeta-platillo {
     height: 100%;
     background: var(--color-acento);
     border-radius: 6px;
+    transition: width .6s cubic-bezier(.22, 1, .36, 1);
 }
 
 .barra-platillo .cantidad {
