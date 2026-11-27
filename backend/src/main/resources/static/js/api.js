@@ -156,4 +156,45 @@ function iniciarBotonTema() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', iniciarBotonTema);
+// --- Menu de usuario (dropdown del header) ---
+// Solo abre/cierra el recuadro; el nombre/rol ya vienen escritos en el HTML
+// o los llena cada pagina (igual que antes) escribiendo en #nombre-usuario,
+// y "Cerrar sesión" sigue siendo el mismo #btn-salir de siempre.
+function iniciarMenuUsuario() {
+    const boton = document.getElementById('btn-menu-usuario');
+    const panel = document.getElementById('dropdown-usuario');
+    if (!boton || !panel) {
+        return;
+    }
+    const cerrar = () => {
+        panel.classList.remove('abierto');
+        boton.setAttribute('aria-expanded', 'false');
+    };
+    const abrir = () => {
+        panel.classList.add('abierto');
+        boton.setAttribute('aria-expanded', 'true');
+    };
+    boton.addEventListener('click', (evento) => {
+        evento.stopPropagation();
+        if (panel.classList.contains('abierto')) {
+            cerrar();
+        } else {
+            abrir();
+        }
+    });
+    document.addEventListener('click', (evento) => {
+        if (panel.classList.contains('abierto') && !panel.contains(evento.target) && !boton.contains(evento.target)) {
+            cerrar();
+        }
+    });
+    document.addEventListener('keydown', (evento) => {
+        if (evento.key === 'Escape') {
+            cerrar();
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    iniciarBotonTema();
+    iniciarMenuUsuario();
+});

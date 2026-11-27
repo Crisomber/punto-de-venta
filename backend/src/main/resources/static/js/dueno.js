@@ -602,8 +602,12 @@ function renderGraficaIngresos(dias, hoy) {
         relleno.className = 'relleno';
         const alturaFinal = Math.max(4, Math.round((dia.total / max) * 130));
         relleno.style.height = '0px';
-        relleno.title = '$' + dia.total;
         animaciones.push(() => { relleno.style.height = alturaFinal + 'px'; });
+
+        const valor = document.createElement('span');
+        valor.className = 'valor-dia';
+        valor.textContent = '$' + dia.total;
+        relleno.appendChild(valor);
 
         const etiqueta = document.createElement('span');
         etiqueta.className = 'etiqueta-dia';

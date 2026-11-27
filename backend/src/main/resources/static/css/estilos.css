@@ -94,6 +94,7 @@ body.app {
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    gap: 12px;
     padding: 0 20px;
     background: var(--color-superficie);
     border-bottom: 1px solid var(--color-borde);
@@ -110,6 +111,94 @@ body.app {
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
+}
+
+/* --- Menu de usuario: recuadro en el header que se abre/cierra al dar click
+   y muestra el nombre, el rol y "Cerrar sesión". */
+.menu-usuario {
+    position: relative;
+}
+
+.boton-menu-usuario {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--color-texto-secundario);
+    border: 1px solid var(--color-borde);
+    border-radius: 8px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.avatar-usuario {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-pill-fondo);
+    color: var(--color-acento);
+    flex-shrink: 0;
+}
+
+.flecha-menu {
+    font-size: 10px;
+    color: var(--color-texto-muted);
+    transition: transform .15s ease;
+}
+
+.boton-menu-usuario[aria-expanded="true"] .flecha-menu {
+    transform: rotate(180deg);
+}
+
+.dropdown-usuario {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background: var(--color-superficie);
+    border: 1px solid var(--color-borde);
+    border-radius: 10px;
+    box-shadow: var(--sombra-panel);
+    padding: 14px;
+    opacity: 0;
+    transform-origin: top right;
+    transform: translateY(-6px) scale(.97);
+    pointer-events: none;
+    transition: opacity .15s ease, transform .15s ease;
+    z-index: 110;
+}
+
+.dropdown-usuario.abierto {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.dropdown-usuario-nombre {
+    margin: 0 0 2px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-texto);
+}
+
+.dropdown-usuario-rol {
+    margin: 0;
+    font-size: 12px;
+    color: var(--color-texto-muted);
+}
+
+.dropdown-usuario hr {
+    border: none;
+    border-top: 1px solid var(--color-borde);
+    margin: 10px 0;
+}
+
+.dropdown-usuario-salir {
+    width: 100%;
 }
 
 .barra {
@@ -581,6 +670,7 @@ button.tarjeta-platillo {
 }
 
 .barra-dia .relleno {
+    position: relative;
     width: 100%;
     background: var(--color-pill-fondo);
     border-radius: 6px 6px 0 0;
@@ -589,6 +679,29 @@ button.tarjeta-platillo {
 
 .barra-dia.hoy .relleno {
     background: var(--color-acento);
+}
+
+.barra-dia .valor-dia {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    opacity: 0;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-texto);
+    background: var(--color-panel);
+    border: 1px solid var(--color-borde);
+    border-radius: 6px;
+    padding: 3px 8px;
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+}
+
+.barra-dia:hover .valor-dia {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 .barra-dia .etiqueta-dia {

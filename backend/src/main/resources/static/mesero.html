@@ -9,11 +9,24 @@
 <body class="app">
 <div class="barra-tema">
     <button type="button" class="boton-tema" id="btn-tema">Modo oscuro</button>
+    <div class="menu-usuario">
+        <button type="button" class="boton-menu-usuario" id="btn-menu-usuario" aria-haspopup="true" aria-expanded="false">
+            <span class="avatar-usuario" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
+            </span>
+            <span class="flecha-menu" aria-hidden="true">▾</span>
+        </button>
+        <div class="dropdown-usuario" id="dropdown-usuario" role="menu">
+            <p class="dropdown-usuario-nombre" id="nombre-usuario"></p>
+            <p class="dropdown-usuario-rol">Mesero</p>
+            <hr>
+            <button type="button" class="boton-secundario dropdown-usuario-salir" id="btn-salir">Cerrar sesión</button>
+        </div>
+    </div>
 </div>
 <div class="app-shell">
     <div class="barra">
-        <h1>Mesero — <span id="nombre-usuario"></span></h1>
-        <button class="boton-secundario" id="btn-salir">Cerrar sesión</button>
+        <h1>Mesero</h1>
     </div>
 
     <div id="vista-mesas">
