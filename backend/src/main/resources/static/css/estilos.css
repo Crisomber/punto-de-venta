@@ -581,6 +581,7 @@ button.tarjeta-platillo {
 }
 
 .barra-dia .relleno {
+    position: relative;
     width: 100%;
     background: var(--color-pill-fondo);
     border-radius: 6px 6px 0 0;
@@ -589,6 +590,29 @@ button.tarjeta-platillo {
 
 .barra-dia.hoy .relleno {
     background: var(--color-acento);
+}
+
+.barra-dia .valor-dia {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    opacity: 0;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-texto);
+    background: var(--color-panel);
+    border: 1px solid var(--color-borde);
+    border-radius: 6px;
+    padding: 3px 8px;
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+}
+
+.barra-dia:hover .valor-dia {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 .barra-dia .etiqueta-dia {
