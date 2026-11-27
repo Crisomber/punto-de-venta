@@ -1,7 +1,10 @@
 let sesion = null;
+let categorias = [];
 let platillos = [];
 let nombreModificadorPorId = {};
+let categoriaActiva = null;
 let ordenActualId = null;
+let pendiente = [];
 
 async function iniciar() {
     sesion = requerirSesion('MESERO');
@@ -13,75 +16,209 @@ async function iniciar() {
     document.getElementById('btn-volver').addEventListener('click', mostrarVistaMesas);
     document.getElementById('btn-nueva-para-llevar').addEventListener('click', () =>
         conBotonCargando(document.getElementById('btn-nueva-para-llevar'), crearOrdenParaLlevar));
-    document.getElementById('select-platillo').addEventListener('change', () => {
-        renderModificadoresDisponibles();
-        renderVarianteDisponible();
-    });
-    document.getElementById('form-agregar-item').addEventListener('submit', agregarItem);
+    document.getElementById('orden-buscar').addEventListener('input', renderGridPlatillosOrden);
+    document.getElementById('btn-agregar-a-orden').addEventListener('click', () =>
+        conBotonCargando(document.getElementById('btn-agregar-a-orden'), agregarPendienteAOrden));
     document.getElementById('btn-enviar').addEventListener('click', () =>
         conBotonCargando(document.getElementById('btn-enviar'), enviarOrden));
     document.getElementById('btn-cerrar').addEventListener('click', () =>
         conBotonCargando(document.getElementById('btn-cerrar'), cerrarCuenta));
 
-    const [listaPlatillos, listaModificadores] = await Promise.all([
+    const [listaCategorias, listaPlatillos, listaModificadores] = await Promise.all([
+        apiGet('/api/categorias'),
         apiGet('/api/platillos'),
         apiGet('/api/modificadores'),
     ]);
+    categorias = listaCategorias;
     platillos = listaPlatillos.filter((p) => p.activo);
     nombreModificadorPorId = Object.fromEntries(listaModificadores.map((m) => [m.id, m.nombre]));
-    llenarSelectPlatillos();
+    categoriaActiva = categorias.length ? categorias[0].id : null;
+    renderTabsCategoriasOrden();
     await mostrarVistaMesas();
 }
 
-function llenarSelectPlatillos() {
-    const select = document.getElementById('select-platillo');
-    select.innerHTML = '';
-    for (const platillo of platillos) {
-        const opcion = document.createElement('option');
-        opcion.value = platillo.id;
-        const precioTexto = platillo.variantes.length ? 'variantes' : '$' + platillo.precio;
-        opcion.textContent = platillo.nombre + ' — ' + precioTexto + ' (' + platillo.categoriaNombre + ')';
-        select.appendChild(opcion);
-    }
-    renderModificadoresDisponibles();
-    renderVarianteDisponible();
-}
-
-function renderVarianteDisponible() {
-    const contenedor = document.getElementById('selector-variante');
-    const select = document.getElementById('select-variante');
-    select.innerHTML = '';
-    const platilloId = document.getElementById('select-platillo').value;
-    const platillo = platillos.find((p) => p.id === platilloId);
-    if (!platillo || !platillo.variantes.length) {
-        contenedor.classList.add('oculto');
-        return;
-    }
-    contenedor.classList.remove('oculto');
-    for (const variante of platillo.variantes) {
-        const opcion = document.createElement('option');
-        opcion.value = variante.id;
-        opcion.textContent = variante.nombre + ' — $' + variante.precio;
-        select.appendChild(opcion);
-    }
-}
-
-function renderModificadoresDisponibles() {
-    const contenedor = document.getElementById('checkboxes-modificadores');
+// --- Navegacion del menu para agregar platillos (misma idea que la "Nueva
+// venta" de caja: buscador + tabs de categoria + tarjetas) ---
+function renderTabsCategoriasOrden() {
+    const contenedor = document.getElementById('orden-tabs-categorias');
     contenedor.innerHTML = '';
-    const platilloId = document.getElementById('select-platillo').value;
-    const platillo = platillos.find((p) => p.id === platilloId);
-    if (!platillo) {
-        return;
+    for (const categoria of categorias) {
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.className = categoria.id === categoriaActiva ? 'activa' : '';
+        boton.textContent = categoria.nombre;
+        boton.addEventListener('click', () => {
+            categoriaActiva = categoria.id;
+            renderTabsCategoriasOrden();
+            renderGridPlatillosOrden();
+        });
+        contenedor.appendChild(boton);
     }
-    for (const modificadorId of platillo.modificadorIds) {
-        const etiqueta = document.createElement('label');
-        const casilla = document.createElement('input');
-        casilla.type = 'checkbox';
-        casilla.value = modificadorId;
-        etiqueta.appendChild(casilla);
-        etiqueta.appendChild(document.createTextNode(nombreModificadorPorId[modificadorId] || '?'));
-        contenedor.appendChild(etiqueta);
+}
+
+function renderGridPlatillosOrden() {
+    const grid = document.getElementById('orden-grid-platillos');
+    grid.innerHTML = '';
+    const busqueda = document.getElementById('orden-buscar').value.trim().toLowerCase();
+    const visibles = platillos.filter((p) => {
+        if (busqueda) {
+            return p.nombre.toLowerCase().includes(busqueda);
+        }
+        return p.categoriaId === categoriaActiva;
+    });
+
+    for (const platillo of visibles) {
+        const tieneVariantes = platillo.variantes.length > 0;
+        const tarjeta = document.createElement(tieneVariantes ? 'div' : 'button');
+        tarjeta.className = 'tarjeta-platillo';
+        if (!tieneVariantes) {
+            tarjeta.type = 'button';
+        }
+
+        const nombre = document.createElement('p');
+        nombre.className = 'nombre';
+        nombre.textContent = platillo.nombre;
+        tarjeta.appendChild(nombre);
+
+        if (tieneVariantes) {
+            const pills = document.createElement('div');
+            pills.className = 'variantes-pills';
+            for (const variante of platillo.variantes) {
+                const boton = document.createElement('button');
+                boton.type = 'button';
+                boton.textContent = variante.nombre + ' $' + variante.precio;
+                boton.addEventListener('click', () => agregarAPendiente(platillo, variante));
+                pills.appendChild(boton);
+            }
+            tarjeta.appendChild(pills);
+        } else {
+            const precio = document.createElement('p');
+            precio.className = 'precio';
+            precio.textContent = '$' + platillo.precio;
+            tarjeta.appendChild(precio);
+            tarjeta.addEventListener('click', () => agregarAPendiente(platillo, null));
+        }
+        grid.appendChild(tarjeta);
+    }
+    if (visibles.length === 0) {
+        grid.innerHTML = '<p class="vacio">No hay platillos en esta categoría.</p>';
+    }
+}
+
+// --- Pedido pendiente: lo que el mesero fue tocando y todavia no se manda
+// a la orden real. Aqui tambien se eligen los modificadores (salsas, etc.)
+// y la cantidad, antes de confirmar con "Agregar a la orden". ---
+function agregarAPendiente(platillo, variante) {
+    const varianteId = variante ? variante.id : null;
+    const existente = pendiente.find((l) => l.platilloId === platillo.id && l.varianteId === varianteId);
+    if (existente) {
+        existente.cantidad += 1;
+    } else {
+        pendiente.push({
+            platilloId: platillo.id,
+            nombre: platillo.nombre,
+            varianteId,
+            varianteNombre: variante ? variante.nombre : null,
+            modificadorIds: platillo.modificadorIds,
+            modificadoresSeleccionados: new Set(),
+            cantidad: 1,
+        });
+    }
+    renderPendiente();
+}
+
+function cambiarCantidadPendiente(linea, delta) {
+    linea.cantidad += delta;
+    if (linea.cantidad <= 0) {
+        pendiente = pendiente.filter((l) => l !== linea);
+    }
+    renderPendiente();
+}
+
+function renderPendiente() {
+    const lista = document.getElementById('lista-pendiente');
+    lista.innerHTML = '';
+    for (const linea of pendiente) {
+        const li = document.createElement('li');
+        li.className = 'item-fila';
+
+        const info = document.createElement('div');
+        const nombre = document.createElement('span');
+        nombre.textContent = linea.nombre + (linea.varianteNombre ? ' (' + linea.varianteNombre + ')' : '');
+        info.appendChild(nombre);
+
+        if (linea.modificadorIds.length) {
+            const chips = document.createElement('div');
+            chips.className = 'modificadores-chips';
+            for (const modificadorId of linea.modificadorIds) {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                const activa = linea.modificadoresSeleccionados.has(modificadorId);
+                chip.className = 'chip-modificador' + (activa ? ' activa' : '');
+                chip.textContent = nombreModificadorPorId[modificadorId] || '?';
+                chip.addEventListener('click', () => {
+                    if (linea.modificadoresSeleccionados.has(modificadorId)) {
+                        linea.modificadoresSeleccionados.delete(modificadorId);
+                    } else {
+                        linea.modificadoresSeleccionados.add(modificadorId);
+                    }
+                    renderPendiente();
+                });
+                chips.appendChild(chip);
+            }
+            info.appendChild(chips);
+        }
+
+        const acciones = document.createElement('div');
+        acciones.className = 'item-acciones';
+
+        const btnMenos = document.createElement('button');
+        btnMenos.type = 'button';
+        btnMenos.className = 'boton-mini';
+        btnMenos.textContent = '−';
+        btnMenos.addEventListener('click', () => cambiarCantidadPendiente(linea, -1));
+
+        const cantidad = document.createElement('span');
+        cantidad.textContent = linea.cantidad;
+
+        const btnMas = document.createElement('button');
+        btnMas.type = 'button';
+        btnMas.className = 'boton-mini';
+        btnMas.textContent = '+';
+        btnMas.addEventListener('click', () => cambiarCantidadPendiente(linea, 1));
+
+        acciones.appendChild(btnMenos);
+        acciones.appendChild(cantidad);
+        acciones.appendChild(btnMas);
+        li.appendChild(info);
+        li.appendChild(acciones);
+        lista.appendChild(li);
+    }
+    document.getElementById('pendiente-vacio').classList.toggle('oculto', pendiente.length > 0);
+    document.getElementById('btn-agregar-a-orden').disabled = pendiente.length === 0;
+}
+
+async function agregarPendienteAOrden() {
+    const error = document.getElementById('error-agregar');
+    error.textContent = '';
+    const items = pendiente.map((linea) => {
+        const item = {
+            platilloId: linea.platilloId,
+            cantidad: linea.cantidad,
+            modificadorIds: [...linea.modificadoresSeleccionados],
+        };
+        if (linea.varianteId) {
+            item.varianteId = linea.varianteId;
+        }
+        return item;
+    });
+    try {
+        await apiPostAuth('/api/ordenes/' + ordenActualId + '/items', { items });
+        pendiente = [];
+        renderPendiente();
+        await refrescarOrden();
+    } catch (e) {
+        error.textContent = e.message;
     }
 }
 
@@ -167,6 +304,12 @@ async function crearOrdenParaLlevar() {
 
 async function mostrarOrden(id) {
     ordenActualId = id;
+    pendiente = [];
+    document.getElementById('orden-buscar').value = '';
+    categoriaActiva = categorias.length ? categorias[0].id : categoriaActiva;
+    renderTabsCategoriasOrden();
+    renderGridPlatillosOrden();
+    renderPendiente();
     document.getElementById('vista-mesas').classList.add('oculto');
     document.getElementById('vista-orden').classList.remove('oculto');
     document.getElementById('error-orden').textContent = '';
@@ -199,34 +342,10 @@ function renderOrden(orden) {
     }
 
     const puedeAgregar = orden.estado === 'ABIERTA' || orden.estado === 'ENVIADA';
-    document.getElementById('panel-agregar').classList.toggle('oculto', !puedeAgregar);
+    document.getElementById('panel-agregar-platillos').classList.toggle('oculto', !puedeAgregar);
+    document.getElementById('bloque-pendiente').classList.toggle('oculto', !puedeAgregar);
     document.getElementById('btn-enviar').classList.toggle('oculto', orden.estado !== 'ABIERTA');
     document.getElementById('btn-cerrar').classList.toggle('oculto', orden.estado !== 'ENVIADA');
-}
-
-async function agregarItem(evento) {
-    evento.preventDefault();
-    const platilloId = document.getElementById('select-platillo').value;
-    const cantidad = parseInt(document.getElementById('input-cantidad').value, 10);
-    const modificadorIds = [...document.querySelectorAll('#checkboxes-modificadores input:checked')]
-        .map((casilla) => casilla.value);
-    const error = document.getElementById('error-agregar');
-    error.textContent = '';
-    const item = { platilloId, cantidad, modificadorIds };
-    const platillo = platillos.find((p) => p.id === platilloId);
-    if (platillo && platillo.variantes.length) {
-        item.varianteId = document.getElementById('select-variante').value;
-    }
-    await conBotonCargando(evento.submitter, async () => {
-        try {
-            await apiPostAuth('/api/ordenes/' + ordenActualId + '/items', {
-                items: [item],
-            });
-            await refrescarOrden();
-        } catch (e) {
-            error.textContent = e.message;
-        }
-    });
 }
 
 async function enviarOrden() {

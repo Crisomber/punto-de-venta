@@ -47,38 +47,40 @@
     <div id="vista-orden" class="oculto">
         <button class="boton-secundario" id="btn-volver">← Volver a mesas</button>
 
-        <div class="panel" style="margin-top:16px">
-            <h2 id="titulo-orden"></h2>
-            <ul class="lista-simple" id="lista-items"></ul>
-        </div>
-
-        <div class="panel" id="panel-agregar">
-            <h2>Agregar platillo</h2>
-            <form id="form-agregar-item">
+        <div class="venta-layout" style="margin-top:16px">
+            <section class="panel" id="panel-agregar-platillos" style="flex:999 1 560px;min-width:0">
+                <h2>Agregar platillos</h2>
                 <div class="fila-form">
-                    <div>
-                        <label for="select-platillo">Platillo</label>
-                        <select id="select-platillo" style="min-width:220px"></select>
+                    <div style="flex:1">
+                        <label for="orden-buscar">Buscar platillo</label>
+                        <input type="text" id="orden-buscar" placeholder="Buscar…">
                     </div>
-                    <div id="selector-variante" class="oculto">
-                        <label for="select-variante">Tamaño</label>
-                        <select id="select-variante" style="min-width:160px"></select>
-                    </div>
-                    <div>
-                        <label for="input-cantidad">Cantidad</label>
-                        <input type="number" id="input-cantidad" value="1" min="1" style="width:80px">
-                    </div>
-                    <button type="submit" class="boton-primario">Agregar</button>
                 </div>
-                <div class="checkboxes-mod" id="checkboxes-modificadores" style="margin-top:12px"></div>
-                <p class="error" id="error-agregar"></p>
-            </form>
-        </div>
+                <div class="tabs tabs-categorias" id="orden-tabs-categorias" style="margin-top:12px"></div>
+                <div class="grid-platillos" id="orden-grid-platillos" style="margin-top:16px"></div>
+            </section>
 
-        <div class="panel">
-            <button class="boton-primario oculto" id="btn-enviar">Enviar a cocina</button>
-            <button class="boton-primario oculto" id="btn-cerrar">Cerrar cuenta</button>
-            <p class="error" id="error-orden"></p>
+            <aside class="panel panel-ticket">
+                <h2 id="titulo-orden"></h2>
+
+                <div id="bloque-pendiente">
+                    <h3 style="margin:0 0 10px">Por agregar</h3>
+                    <ul class="lista-simple" id="lista-pendiente"></ul>
+                    <p class="vacio" id="pendiente-vacio">Toca un platillo para agregarlo.</p>
+                    <button type="button" class="boton-primario" id="btn-agregar-a-orden" style="width:100%;margin-top:10px" disabled>Agregar a la orden</button>
+                    <p class="error" id="error-agregar"></p>
+                    <hr style="margin:20px 0;border:none;border-top:1px solid var(--color-borde)">
+                </div>
+
+                <h3 style="margin:0 0 10px">En la orden</h3>
+                <ul class="lista-simple" id="lista-items"></ul>
+
+                <div style="margin-top:16px;display:flex;gap:10px">
+                    <button class="boton-primario oculto" id="btn-enviar" style="flex:1">Enviar a cocina</button>
+                    <button class="boton-primario oculto" id="btn-cerrar" style="flex:1">Cerrar cuenta</button>
+                </div>
+                <p class="error" id="error-orden"></p>
+            </aside>
         </div>
     </div>
 </div>

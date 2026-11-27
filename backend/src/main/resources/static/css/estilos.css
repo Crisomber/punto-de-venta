@@ -77,7 +77,7 @@ body.app {
 }
 
 .app-shell {
-    max-width: 960px;
+    max-width: 1320px;
     margin: 0 auto;
     padding: 24px;
     padding-top: calc(24px + var(--altura-barra-tema));
@@ -606,23 +606,23 @@ button.cargando::after {
 }
 
 .panel-ticket {
-    flex: 1 1 320px;
-    max-width: 380px;
+    flex: 1 1 340px;
+    max-width: 420px;
 }
 
 .grid-platillos {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
 }
 
 .tarjeta-platillo {
     background: var(--color-fondo-sutil);
-    border-radius: 10px;
-    padding: 12px;
+    border-radius: 12px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     border: none;
     text-align: left;
     font-family: inherit;
@@ -787,13 +787,13 @@ button.tarjeta-platillo {
 
 .tarjeta-platillo .nombre {
     margin: 0;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
 }
 
 .tarjeta-platillo .precio {
     margin: 0;
-    font-size: 14px;
+    font-size: 18px;
     font-weight: 700;
     color: var(--color-acento);
 }
@@ -809,6 +809,29 @@ button.tarjeta-platillo {
     color: var(--color-pill-texto);
     border: none;
     border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+/* Chips de modificadores dentro del "pedido por agregar" del mesero: a
+   diferencia de las pills de variantes (eligen una opcion y listo), estos
+   se pueden prender/apagar libremente, por eso llevan su propio estado
+   ".activa" en vez de disparar una accion inmediata. */
+.modificadores-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.chip-modificador {
+    background: var(--color-superficie);
+    color: var(--color-texto-secundario);
+    border: 1.5px solid var(--color-borde);
+    border-radius: 999px;
     padding: 4px 10px;
     font-size: 12px;
     font-weight: 600;
@@ -816,7 +839,40 @@ button.tarjeta-platillo {
     font-family: inherit;
 }
 
-#tabs-categorias button {
+.chip-modificador.activa {
+    background: var(--color-acento);
+    color: var(--color-acento-texto);
+    border-color: var(--color-acento);
+}
+
+/* Tabs de categorías para navegar el menú (caja/mesero): a diferencia de los
+   tabs fijos de arriba, estos pueden desbordar y scrollear horizontalmente,
+   asi que llevan su propio estilo de scrollbar a juego con los colores. */
+.tabs-categorias {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-acento) var(--color-fondo-tabs);
+}
+
+.tabs-categorias button {
     flex: none;
     white-space: nowrap;
+    font-size: 14px;
+    padding: 10px 18px;
+}
+
+.tabs-categorias::-webkit-scrollbar {
+    height: 8px;
+}
+
+.tabs-categorias::-webkit-scrollbar-track {
+    background: var(--color-fondo-tabs);
+    border-radius: 999px;
+}
+
+.tabs-categorias::-webkit-scrollbar-thumb {
+    background: var(--color-acento);
+    border-radius: 999px;
+    border: 2px solid var(--color-fondo-tabs);
 }
