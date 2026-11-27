@@ -573,10 +573,26 @@ function renderKpis(totales, tickets, mesas) {
     grid.appendChild(tarjetaKpi('Mesas ocupadas', ocupadas + ' / ' + mesas.length, 'Ahora mismo'));
 }
 
+// Anima una lista de funciones que ponen el valor final de algo (altura,
+// ancho, stroke-dasharray...). Los elementos se dejan en su estado "vacio" al
+// insertarlos y, dos frames despues (para que el navegador alcance a pintar
+// ese estado inicial), se llama cada funcion — la transicion CSS ya declarada
+// en cada elemento hace el resto.
+function animarDesdeCero(aplicarCadaUno) {
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            for (const aplicar of aplicarCadaUno) {
+                aplicar();
+            }
+        });
+    });
+}
+
 function renderGraficaIngresos(dias, hoy) {
     const contenedor = document.getElementById('grafica-ingresos');
     contenedor.innerHTML = '';
     const max = Math.max(1, ...dias.map((d) => d.total));
+    const animaciones = [];
     for (const dia of dias) {
         const esHoy = dia.fecha === hoy;
         const columna = document.createElement('div');
@@ -584,8 +600,10 @@ function renderGraficaIngresos(dias, hoy) {
 
         const relleno = document.createElement('div');
         relleno.className = 'relleno';
-        relleno.style.height = Math.max(4, Math.round((dia.total / max) * 130)) + 'px';
+        const alturaFinal = Math.max(4, Math.round((dia.total / max) * 130));
+        relleno.style.height = '0px';
         relleno.title = '$' + dia.total;
+        animaciones.push(() => { relleno.style.height = alturaFinal + 'px'; });
 
         const etiqueta = document.createElement('span');
         etiqueta.className = 'etiqueta-dia';
@@ -595,6 +613,7 @@ function renderGraficaIngresos(dias, hoy) {
         columna.appendChild(etiqueta);
         contenedor.appendChild(columna);
     }
+    animarDesdeCero(animaciones);
 }
 
 function renderGraficaMetodo(totales) {
@@ -635,9 +654,10 @@ function renderGraficaMetodo(totales) {
         arcoEfectivo.setAttribute('r', '48');
         arcoEfectivo.setAttribute('fill', 'none');
         arcoEfectivo.setAttribute('stroke-width', '18');
-        arcoEfectivo.setAttribute('stroke-dasharray', largoEfectivo + ' ' + circunferencia);
+        arcoEfectivo.setAttribute('stroke-dasharray', '0 ' + circunferencia);
         arcoEfectivo.setAttribute('transform', 'rotate(-90 60 60)');
         arcoEfectivo.style.stroke = 'var(--color-acento)';
+        arcoEfectivo.style.transition = 'stroke-dasharray .8s cubic-bezier(.22, 1, .36, 1)';
         svg.appendChild(arcoEfectivo);
 
         const arcoTarjeta = document.createElementNS(svgNS, 'circle');
@@ -646,11 +666,17 @@ function renderGraficaMetodo(totales) {
         arcoTarjeta.setAttribute('r', '48');
         arcoTarjeta.setAttribute('fill', 'none');
         arcoTarjeta.setAttribute('stroke-width', '18');
-        arcoTarjeta.setAttribute('stroke-dasharray', largoTarjeta + ' ' + circunferencia);
+        arcoTarjeta.setAttribute('stroke-dasharray', '0 ' + circunferencia);
         arcoTarjeta.setAttribute('stroke-dashoffset', String(-largoEfectivo));
         arcoTarjeta.setAttribute('transform', 'rotate(-90 60 60)');
         arcoTarjeta.style.stroke = 'var(--color-rol-etiqueta)';
+        arcoTarjeta.style.transition = 'stroke-dasharray .8s cubic-bezier(.22, 1, .36, 1)';
         svg.appendChild(arcoTarjeta);
+
+        animarDesdeCero([
+            () => arcoEfectivo.setAttribute('stroke-dasharray', largoEfectivo + ' ' + circunferencia),
+            () => arcoTarjeta.setAttribute('stroke-dasharray', largoTarjeta + ' ' + circunferencia),
+        ]);
     }
 
     contenedor.appendChild(svg);
@@ -676,6 +702,7 @@ function renderGraficaPlatillos(ranking) {
         return;
     }
     const max = Math.max(...top.map((p) => p.cantidadVendida));
+    const animaciones = [];
     for (const fila of top) {
         const div = document.createElement('div');
         div.className = 'barra-platillo';
@@ -688,7 +715,9 @@ function renderGraficaPlatillos(ranking) {
         pista.className = 'pista';
         const relleno = document.createElement('div');
         relleno.className = 'relleno';
-        relleno.style.width = Math.round((fila.cantidadVendida / max) * 100) + '%';
+        const anchoFinal = Math.round((fila.cantidadVendida / max) * 100);
+        relleno.style.width = '0%';
+        animaciones.push(() => { relleno.style.width = anchoFinal + '%'; });
         pista.appendChild(relleno);
 
         const cantidad = document.createElement('span');
@@ -700,6 +729,7 @@ function renderGraficaPlatillos(ranking) {
         div.appendChild(cantidad);
         contenedor.appendChild(div);
     }
+    animarDesdeCero(animaciones);
 }
 
 function renderTickets(tickets) {
