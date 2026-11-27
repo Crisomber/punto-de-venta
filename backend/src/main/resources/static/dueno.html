@@ -171,10 +171,14 @@
     </div>
 
     <!-- REPORTES -->
-    <div id="vista-reportes" class="oculto" style="margin-top:20px">
-        <div class="panel">
-            <h2>Reporte de ventas</h2>
-            <div class="fila-form">
+    <div id="vista-reportes" class="oculto" style="margin-top:20px;display:flex;flex-direction:column;gap:16px">
+
+        <div class="panel" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
+            <div>
+                <p class="etiqueta-rol">Reportes</p>
+                <h2 id="titulo-reporte-fecha" style="margin:0">Hoy</h2>
+            </div>
+            <div class="fila-form" style="margin:0">
                 <div>
                     <label for="reporte-desde">Desde</label>
                     <input type="date" id="reporte-desde">
@@ -185,23 +189,33 @@
                 </div>
                 <button type="button" class="boton-primario" id="btn-consultar-reporte">Consultar</button>
             </div>
-            <p class="error" id="error-reporte"></p>
+        </div>
+        <p class="error" id="error-reporte"></p>
+
+        <div class="oculto" id="panel-kpis">
+            <div id="grid-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px"></div>
         </div>
 
-        <div class="panel oculto" id="panel-totales">
-            <h2>Totales</h2>
-            <ul class="lista-simple">
-                <li class="fila-lista"><span>Total vendido</span><span id="r-total-vendido"></span></li>
-                <li class="fila-lista"><span>Efectivo</span><span id="r-total-efectivo"></span></li>
-                <li class="fila-lista"><span>Tarjeta</span><span id="r-total-tarjeta"></span></li>
-                <li class="fila-lista"><span>Ticket promedio</span><span id="r-ticket-promedio"></span></li>
-                <li class="fila-lista"><span>Cuentas cobradas</span><span id="r-cantidad-cuentas"></span></li>
-            </ul>
+        <div class="oculto" id="fila-graficas" style="display:flex;gap:16px;flex-wrap:wrap">
+            <div class="panel" style="flex:2 1 420px;min-width:0">
+                <h2 style="margin:0 0 16px">Ingresos por día (últimos 7 días)</h2>
+                <div id="grafica-ingresos" style="display:flex;align-items:flex-end;gap:12px;height:160px"></div>
+            </div>
+            <div class="panel" style="flex:1 1 260px;min-width:0">
+                <h2 style="margin:0 0 16px">Efectivo vs. Tarjeta</h2>
+                <div id="grafica-metodo" style="display:flex;align-items:center;gap:20px"></div>
+            </div>
         </div>
 
         <div class="panel oculto" id="panel-ranking">
             <h2>Platillos más vendidos</h2>
-            <ul class="lista-simple" id="lista-ranking"></ul>
+            <div id="grafica-platillos" style="display:flex;flex-direction:column;gap:10px"></div>
+        </div>
+
+        <div class="panel oculto" id="panel-tickets">
+            <h2 style="margin:0 0 4px">Tickets del rango</h2>
+            <p class="vacio" id="tickets-info" style="margin:0 0 16px"></p>
+            <div id="grid-tickets" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px"></div>
         </div>
     </div>
 </div>
